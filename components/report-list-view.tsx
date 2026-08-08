@@ -1,15 +1,42 @@
 "use client";
 
 import Link from "next/link";
-import { CalendarDays, Download, FileText, Filter, Plus, Search, Wrench } from "lucide-react";
+import { CalendarDays, Clock3, Download, FileText, Filter, Plus, Search, UserRound, Wrench } from "lucide-react";
 import { useState } from "react";
-import { BottomSheet, EmptyState, SelectField } from "./ui";
+import { BottomSheet, EmptyState, ErrorState, SelectField, StatusBadge } from "./ui";
 
-export function ReportListView({ type }: { type: "daily" | "maintenance" }) {
+export type DailyReportListItem = {
+  id: string;
+  employee_id: string;
+  employeeName: string;
+  report_date: string;
+  start_time: string | null;
+  end_time: string | null;
+  work_summary: string;
+  status: "draft" | "submitted" | "approved" | "rejected" | "revision_requested";
+  submitted_at: string | null;
+};
+
+const statusLabels = { draft: "پیش‌نویس", submitted: "ثبت‌شده", approved: "تأییدشده", rejected: "ردشده", revision_requested: "نیاز به اصلاح" } as const;
+const statusTones = { draft: "draft", submitted: "submitted", approved: "approved", rejected: "rejected", revision_requested: "review" } as const;
+
+function formatPersianDate(value: string) {
+  return new Intl.DateTimeFormat("fa-IR-u-ca-persian", { year: "numeric", month: "long", day: "numeric" }).format(new Date(`${value}T12:00:00`));
+}
+
+function formatTime(value: string | null) {
+  return value ? value.slice(0, 5).replace(/\d/g, (digit) => "۰۱۲۳۴۵۶۷۸۹"[Number(digit)]) : "—";
+}
+
+export function ReportListView({ type, reports = [], loadError = false }: { type: "daily" | "maintenance"; reports?: DailyReportListItem[]; loadError?: boolean }) {
   const maintenance = type === "maintenance";
   const [query, setQuery] = useState("");
   const [filterOpen, setFilterOpen] = useState(false);
   const newHref = maintenance ? "/maintenance/new" : "/daily-reports/new";
+  const normalizedQuery = query.trim().toLocaleLowerCase("fa");
+  const visibleReports = reports.filter((report) => !normalizedQuery || `${report.employeeName} ${report.work_summary}`.toLocaleLowerCase("fa").includes(normalizedQuery));
+  const pendingCount = reports.filter((report) => report.status === "submitted" || report.status === "revision_requested").length;
+  const approvedCount = reports.filter((report) => report.status === "approved").length;
 
   return (
     <div className="app-page reports-page">
@@ -20,10 +47,10 @@ export function ReportListView({ type }: { type: "daily" | "maintenance" }) {
         </div>
 
         <section className="report-summary-strip">
-          <article><span>همه گزارش‌ها</span><strong>۰</strong></article>
-          <article><span>در انتظار اقدام</span><strong className="warning-text">۰</strong></article>
-          <article><span>{maintenance ? "در حال انجام" : "تأیید شده"}</span><strong>۰</strong></article>
-          <article><span>{maintenance ? "تکمیل این ماه" : "ثبت امروز"}</span><strong>۰</strong></article>
+          <article><span>همه گزارش‌ها</span><strong>{reports.length.toLocaleString("fa-IR")}</strong></article>
+          <article><span>در انتظار اقدام</span><strong className="warning-text">{pendingCount.toLocaleString("fa-IR")}</strong></article>
+          <article><span>{maintenance ? "در حال انجام" : "تأیید شده"}</span><strong>{approvedCount.toLocaleString("fa-IR")}</strong></article>
+          <article><span>{maintenance ? "تکمیل این ماه" : "ثبت‌شده"}</span><strong>{reports.filter((report) => report.status === "submitted").length.toLocaleString("fa-IR")}</strong></article>
         </section>
 
         <section className="surface report-panel">
@@ -31,11 +58,15 @@ export function ReportListView({ type }: { type: "daily" | "maintenance" }) {
             <label className="report-search"><Search /><input value={query} onChange={(event) => setQuery(event.target.value)} autoComplete="off" placeholder={maintenance ? "جست‌وجوی گزارش تعمیرات" : "جست‌وجوی گزارش روزانه"} /></label>
             <button className="button button-secondary mobile-filter-button" onClick={() => setFilterOpen(true)}><Filter /> فیلترها</button>
           </div>
-          <EmptyState
+          {loadError ? <ErrorState /> : !maintenance && visibleReports.length > 0 ? <div className="real-report-list">{visibleReports.map((report) => <article key={report.id}>
+            <span className="list-avatar"><UserRound /></span>
+            <div className="real-report-main"><div><strong>{report.employeeName}</strong><small>{formatPersianDate(report.report_date)}</small></div><p>{report.work_summary}</p><span><Clock3 /> {formatTime(report.start_time)} تا {formatTime(report.end_time)}</span></div>
+            <StatusBadge tone={statusTones[report.status]}>{statusLabels[report.status]}</StatusBadge>
+          </article>)}</div> : <EmptyState
             title={query ? "گزارشی پیدا نشد" : "هنوز گزارشی ثبت نشده است"}
             description={query ? "عبارت جست‌وجو را تغییر دهید." : "با ثبت نخستین گزارش، اطلاعات واقعی در این فهرست نمایش داده می‌شود."}
             action={query ? <button className="button button-secondary" onClick={() => setQuery("")}>پاک کردن جست‌وجو</button> : <Link className="button button-secondary" href={newHref}><FileText /> ثبت نخستین گزارش</Link>}
-          />
+          />}
         </section>
       </div>
 

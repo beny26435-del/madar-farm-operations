@@ -29,6 +29,10 @@ export type Database = {
         { id: string; profile_id: string | null; full_name: string; email: string; status: "active" | "inactive"; created_at: string; updated_at: string },
         { profile_id?: string | null; full_name: string; email: string; status?: "active" | "inactive" }
       >;
+      daily_reports: Table<
+        { id: string; employee_id: string; report_date: string; start_time: string | null; end_time: string | null; work_summary: string; issues: string | null; actions_taken: string | null; notes: string | null; status: "draft" | "submitted" | "approved" | "rejected" | "revision_requested"; submitted_at: string | null; deleted_at: string | null; created_at: string; updated_at: string },
+        { employee_id: string; report_date: string; start_time?: string | null; end_time?: string | null; work_summary?: string; issues?: string | null; actions_taken?: string | null; notes?: string | null; status?: "draft" | "submitted" | "approved" | "rejected" | "revision_requested"; submitted_at?: string | null; deleted_at?: string | null }
+      >;
     };
     Views: Record<never, never>;
     Functions: Record<never, never>;

@@ -9,13 +9,15 @@ const password = process.env.SEED_DEFAULT_PASSWORD;
 assert.ok(url && publishableKey && serviceRoleKey && password, "تنظیمات Supabase کامل نیست.");
 
 const service = createClient(url, serviceRoleKey, { auth: { persistSession: false } });
-const [{ count: profileCount, error: profileError }, { count: employeeCount, error: employeeError }] = await Promise.all([
+const [{ count: profileCount, error: profileError }, { count: employeeCount, error: employeeError }, { error: dailyReportError }] = await Promise.all([
   service.from("profiles").select("id", { count: "exact", head: true }),
   service.from("employees").select("id, email", { count: "exact", head: true }),
+  service.from("daily_reports").select("id, start_time, end_time, actions_taken, notes", { head: true }),
 ]);
 
 if (profileError) throw profileError;
 if (employeeError) throw employeeError;
+if (dailyReportError) throw dailyReportError;
 assert.ok(profileCount >= 1);
 assert.ok(employeeCount >= 1);
 

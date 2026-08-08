@@ -17,7 +17,7 @@ function Field({ label, placeholder, type = "text", hint }: { label: string; pla
 }
 
 function TimeField({ label }: { label: string }) {
-  return <label className="field"><span className="field-label">{label}<span className="field-hint">۲۴ ساعته</span></span><input className="input time-text-input" type="text" inputMode="numeric" autoComplete="off" placeholder="مثلاً 08:30" maxLength={5} dir="ltr" /><small className="field-help">ساعت را با قالب 08:30 تایپ کنید.</small></label>;
+  return <label className="field"><span className="field-label">{label}<span className="field-hint">۲۴ ساعته</span></span><input className="input time-text-input" type="text" inputMode="numeric" autoComplete="off" maxLength={5} dir="ltr" /><small className="field-help">ساعت و دقیقه را کامل وارد کنید.</small></label>;
 }
 
 function TextField({ label, placeholder, hint }: { label: string; placeholder: string; hint?: string }) {
