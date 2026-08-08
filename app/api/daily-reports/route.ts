@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
+import { recordActivity } from "@/lib/activity/log";
 import { isValidTime, normalizeTime, parseJalaliDate } from "@/lib/date/jalali";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
@@ -126,5 +127,6 @@ export async function POST(request: Request) {
       return NextResponse.json({ message: "ذخیره مخارج انجام نشد. دوباره تلاش کنید." }, { status: 500 });
     }
   }
+  await recordActivity({ actorId: profileId, action: "daily_report.submitted", entityType: "daily_report", entityId: report.id, metadata: { summary: input.workSummary.slice(0, 180), report_date: reportDate } });
   return NextResponse.json({ id: report.id, message: "گزارش با موفقیت ثبت شد." }, { status: 201 });
 }

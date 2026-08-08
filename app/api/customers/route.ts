@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
+import { recordActivity } from "@/lib/activity/log";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 
@@ -29,5 +30,6 @@ export async function POST(request: Request) {
   const admin = createAdminClient();
   const { data: customer, error } = await admin.from("customers").insert({ full_name: parsed.data.fullName, phone: phone || null, created_by: actorId }).select("id").single();
   if (error) return NextResponse.json({ message: error.code === "23505" ? "مشتری دیگری با این شماره تماس وجود دارد." : "ثبت مشتری انجام نشد." }, { status: error.code === "23505" ? 409 : 500 });
+  await recordActivity({ actorId, action: "customer.created", entityType: "customer", entityId: customer.id, metadata: { customer_name: parsed.data.fullName } });
   return NextResponse.json({ id: customer.id, message: "مشتری ثبت شد." }, { status: 201 });
 }

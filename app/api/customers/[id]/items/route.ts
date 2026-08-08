@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
+import { recordActivity } from "@/lib/activity/log";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 
@@ -20,9 +21,10 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
   const parsed = itemSchema.safeParse(await request.json().catch(() => null));
   if (!parsed.success) return NextResponse.json({ message: "نام وسیله یا قطعه را کامل وارد کنید." }, { status: 400 });
   const admin = createAdminClient();
-  const { data: customer } = await admin.from("customers").select("id").eq("id", customerId).maybeSingle();
+  const { data: customer } = await admin.from("customers").select("id, full_name").eq("id", customerId).maybeSingle();
   if (!customer) return NextResponse.json({ message: "مشتری پیدا نشد." }, { status: 404 });
   const { data: item, error } = await admin.from("customer_repair_items").insert({ customer_id: customerId, item_name: parsed.data.itemName, details: parsed.data.details || null, created_by: actorId }).select("id").single();
   if (error) return NextResponse.json({ message: "ثبت وسیله انجام نشد." }, { status: 500 });
+  await recordActivity({ actorId, action: "repair_item.received", entityType: "repair_item", entityId: item.id, metadata: { item_name: parsed.data.itemName, customer_name: customer.full_name } });
   return NextResponse.json({ id: item.id, message: "وسیله برای تعمیر ثبت شد." }, { status: 201 });
 }

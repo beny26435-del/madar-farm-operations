@@ -8,7 +8,7 @@ const read = (path) => readFile(new URL(path, root), "utf8");
 
 test("خروجی Next.js همه مسیرهای اصلی را دارد", async () => {
   const manifest = JSON.parse(await read(".next/server/app-paths-manifest.json"));
-  for (const route of ["/login/page", "/dashboard/page", "/daily-reports/page", "/maintenance/page", "/employees/page", "/employees/new/page", "/customers/page", "/customers/new/page", "/customers/[id]/page", "/api/users/route", "/api/daily-reports/route", "/api/customers/route", "/api/customers/[id]/items/route", "/api/customers/[id]/items/[itemId]/route"]) {
+  for (const route of ["/login/page", "/dashboard/page", "/daily-reports/page", "/maintenance/page", "/employees/page", "/employees/new/page", "/customers/page", "/customers/new/page", "/customers/[id]/page", "/reports/page", "/activity/page", "/api/users/route", "/api/daily-reports/route", "/api/customers/route", "/api/customers/[id]/items/route", "/api/customers/[id]/items/[itemId]/route", "/api/reports/[type]/[id]/review/route"]) {
     assert.ok(manifest[route], `missing ${route}`);
   }
 });
@@ -115,6 +115,32 @@ test("پرونده مشتری، اقلام تعمیر و تحویل را با د
   assert.match(migration, /create table public\.customers/);
   assert.match(migration, /create table public\.customer_repair_items/);
   assert.match(migration, /alter table public\.customers enable row level security/);
+});
+
+test("صف بررسی، تصمیم مدیر را در گزارش و تاریخچه ثبت می‌کند", async () => {
+  const page = await read("app/reports/page.tsx");
+  const view = await read("components/reports-review-view.tsx");
+  const api = await read("app/api/reports/[type]/[id]/review/route.ts");
+  assert.match(page, /from\("daily_reports"\)/);
+  assert.match(page, /from\("maintenance_reports"\)/);
+  assert.match(page, /from\("report_reviews"\)/);
+  assert.match(view, /\/api\/reports\/\$\{decision\.report\.type\}/);
+  assert.match(api, /from\("report_reviews"\)\.insert/);
+  assert.match(api, /action: `report\.\$\{input\.action\}`/);
+  assert.match(api, /currentStatus !== "submitted"/);
+});
+
+test("صف فعالیت فقط رویدادهای واقعی ذخیره‌شده را نمایش می‌دهد", async () => {
+  const page = await read("app/activity/page.tsx");
+  const view = await read("components/activity-view.tsx");
+  const logger = await read("lib/activity/log.ts");
+  const migration = await read("supabase/migrations/202608080006_activity_backfill.sql");
+  assert.match(page, /from\("activity_logs"\)/);
+  assert.match(view, /activity-timeline/);
+  assert.doesNotMatch(view, /محمد اینانلو|رضا محمدی|حسین کریمی|علی رضایی/);
+  assert.match(logger, /from\("activity_logs"\)\.insert/);
+  assert.match(migration, /from public\.daily_reports r/);
+  assert.match(migration, /not exists/);
 });
 
 test("migration قواعد هویتی و RLS را حفظ می‌کند", async () => {

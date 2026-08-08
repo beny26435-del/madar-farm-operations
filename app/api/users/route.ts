@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
+import { recordActivity } from "@/lib/activity/log";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 
@@ -52,5 +53,6 @@ export async function POST(request: Request) {
     return NextResponse.json({ message: employeeError?.code === "23505" ? "این ایمیل قبلاً استفاده شده است." : "ساخت حساب کارمند کامل نشد." }, { status: 409 });
   }
 
+  await recordActivity({ actorId, action: "employee.created", entityType: "employee", entityId: userId, metadata: { employee_name: input.fullName } });
   return NextResponse.json({ message: "حساب کارمند ساخته شد و آمادهٔ ورود است." }, { status: 201 });
 }

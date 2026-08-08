@@ -33,6 +33,8 @@ const pageTitles: Record<string, string> = {
   "/employees/new": "ساخت کاربر",
   "/customers": "مشتریان",
   "/customers/new": "افزودن مشتری",
+  "/reports": "بررسی گزارش‌ها",
+  "/activity": "فعالیت‌ها",
 };
 
 export function AppShell({ children, viewer }: { children: React.ReactNode; viewer: Viewer }) {

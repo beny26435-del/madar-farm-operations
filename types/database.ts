@@ -47,6 +47,18 @@ export type Database = {
         { customer_id: string; item_name: string; details?: string | null; status?: "received" | "delivered"; received_at?: string; delivered_at?: string | null; created_by: string },
         { item_name?: string; details?: string | null; status?: "received" | "delivered"; delivered_at?: string | null }
       >;
+      maintenance_reports: Table<
+        { id: string; reporter_employee_id: string; report_date: string; location: string; title: string; description: string; work_status: "completed" | "pending" | "needs_follow_up"; technician_employee_id: string | null; technician_name: string | null; status: "draft" | "submitted" | "approved" | "rejected" | "revision_requested"; submitted_at: string | null; deleted_at: string | null; created_at: string; updated_at: string },
+        { reporter_employee_id: string; report_date: string; location?: string; title?: string; description?: string; work_status?: "completed" | "pending" | "needs_follow_up"; technician_employee_id?: string | null; technician_name?: string | null; status?: "draft" | "submitted" | "approved" | "rejected" | "revision_requested"; submitted_at?: string | null; deleted_at?: string | null }
+      >;
+      report_reviews: Table<
+        { id: string; report_type: "daily" | "maintenance"; report_id: string; reviewer_id: string; action: "approved" | "rejected" | "revision_requested"; comment: string | null; created_at: string },
+        { report_type: "daily" | "maintenance"; report_id: string; reviewer_id: string; action: "approved" | "rejected" | "revision_requested"; comment?: string | null }
+      >;
+      activity_logs: Table<
+        { id: number; actor_id: string | null; action: string; entity_type: string; entity_id: string | null; metadata: Json; created_at: string },
+        { actor_id?: string | null; action: string; entity_type: string; entity_id?: string | null; metadata?: Json; created_at?: string }
+      >;
     };
     Views: Record<never, never>;
     Functions: Record<never, never>;

@@ -629,6 +629,72 @@ button { cursor: pointer; }
 .repair-item-dates { display: flex; flex-wrap: wrap; gap: 10px; color: #8b958f; font-size: 8px; }
 .repair-deliver-button { min-width: 125px; }
 
+/* Report review and activity */
+.review-summary, .activity-summary { margin-bottom: 14px; display: grid; gap: 10px; }
+.review-summary { grid-template-columns: repeat(4,1fr); }
+.activity-summary { grid-template-columns: repeat(3,1fr); }
+.review-summary article, .activity-summary article { min-height: 82px; padding: 16px 18px; border: 1px solid var(--border); border-radius: 14px; background: #fff; display: grid; align-content: center; gap: 7px; }
+.review-summary span, .activity-summary span { color: var(--muted-foreground); font-size: 9px; }
+.review-summary strong, .activity-summary strong { font-size: 19px; }
+.review-panel, .activity-panel { overflow: hidden; }
+.review-toolbar, .activity-toolbar { min-height: 72px; padding: 12px 15px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; gap: 15px; }
+.review-filters, .activity-toolbar > div { display: flex; align-items: center; gap: 5px; }
+.review-filters button, .activity-toolbar > div button { min-height: 36px; padding: 0 12px; border: 0; border-radius: 9px; color: #6f7d74; background: transparent; font-family: inherit; font-size: 9px; font-weight: 650; white-space: nowrap; cursor: pointer; }
+.review-filters button:hover, .activity-toolbar > div button:hover { background: #f1f4f1; color: var(--foreground); }
+.review-filters button.active, .activity-toolbar > div button.active { color: #fff; background: var(--primary); }
+.review-toolbar > label, .activity-toolbar > label { width: min(330px,100%); height: 42px; padding: 0 12px; border: 1px solid var(--border-strong); border-radius: 11px; color: #87938b; display: flex; align-items: center; gap: 8px; background: #fff; }
+.review-toolbar > label:focus-within, .activity-toolbar > label:focus-within { border-color: #8fa293; box-shadow: 0 0 0 3px rgba(73,101,82,.08); }
+.review-toolbar label svg, .activity-toolbar label svg { width: 15px; }
+.review-toolbar input, .activity-toolbar input { width: 100%; border: 0; outline: 0; background: transparent; font-family: inherit; font-size: 10px; }
+.review-list { padding: 14px; display: grid; gap: 11px; }
+.review-card { padding: 16px; border: 1px solid var(--border); border-radius: 13px; background: #fff; display: grid; gap: 15px; }
+.review-card:hover { border-color: #c3cec5; box-shadow: 0 7px 20px rgba(28,44,34,.045); }
+.review-card > header { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.review-type { color: #56705f; display: flex; align-items: center; gap: 7px; font-size: 9px; font-weight: 700; }
+.review-type svg { width: 16px; }
+.review-type.maintenance { color: #5b6f82; }
+.review-card-main { display: grid; grid-template-columns: minmax(180px,.65fr) minmax(0,1.7fr); gap: 20px; }
+.review-author { min-width: 0; display: flex; align-items: center; gap: 10px; }
+.review-author > span { width: 42px; height: 42px; flex: 0 0 auto; border-radius: 12px; color: #54695b; background: #e9efe9; display: grid; place-items: center; font-size: 13px; font-weight: 760; }
+.review-author > div { min-width: 0; display: grid; gap: 4px; }
+.review-author strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 11px; }
+.review-author small { color: var(--subtle-foreground); font-size: 8px; }
+.review-content { min-width: 0; display: grid; gap: 7px; }
+.review-content h2 { margin: 0; font-size: 13px; line-height: 1.8; }
+.review-content p { margin: 0; color: #65736a; font-size: 10px; line-height: 1.9; }
+.review-content > div { display: flex; flex-wrap: wrap; gap: 6px; }
+.review-content > div span { padding: 5px 8px; border-radius: 7px; color: #6b796f; background: #f2f5f2; font-size: 8px; }
+.review-history { padding: 11px 12px; border-radius: 10px; color: #56705e; background: #f5f8f4; display: flex; align-items: flex-start; gap: 9px; }
+.review-history > svg { width: 16px; flex: 0 0 auto; }
+.review-history > div { display: grid; gap: 3px; }
+.review-history strong { font-size: 9px; }
+.review-history span { color: #79867e; font-size: 8px; }
+.review-history p { margin: 3px 0 0; color: #5f6e64; font-size: 9px; line-height: 1.8; }
+.review-card > footer { padding-top: 12px; border-top: 1px solid #edf0ed; display: flex; justify-content: flex-end; gap: 7px; }
+.review-card > footer button { min-height: 36px; padding: 0 12px; border: 1px solid var(--border-strong); border-radius: 9px; color: #5e6c63; background: #fff; display: inline-flex; align-items: center; gap: 6px; font-family: inherit; font-size: 9px; font-weight: 700; cursor: pointer; }
+.review-card > footer button:hover { background: #f4f6f4; }
+.review-card > footer button svg { width: 14px; }
+.review-card > footer .review-approve { border-color: #cfe0cf; color: #37633a; background: #f4faf3; }
+.review-card > footer .review-reject { border-color: #ead5d0; color: #923d35; background: #fff8f6; }
+.review-dialog-form { margin-top: 17px; display: grid; gap: 14px; text-align: right; }
+.review-dialog-form textarea { min-height: 115px; resize: vertical; }
+.review-dialog-form > div { display: flex; justify-content: flex-end; gap: 8px; }
+.activity-timeline { padding: 5px 20px 18px; }
+.activity-timeline article { position: relative; min-height: 84px; padding: 17px 0; display: grid; grid-template-columns: 38px minmax(0,1fr); gap: 12px; }
+.activity-timeline article:not(:last-child)::after { content: ""; position: absolute; top: 57px; right: 18px; bottom: -5px; width: 1px; background: #e2e7e3; }
+.activity-event-icon { position: relative; z-index: 1; width: 38px; height: 38px; border-radius: 11px; display: grid; place-items: center; }
+.activity-event-icon svg { width: 17px; }
+.activity-event-icon.blue { color: #3d6f9d; background: #eaf3fb; }
+.activity-event-icon.green { color: #347144; background: #e8f5eb; }
+.activity-event-icon.red { color: #9a4137; background: #faece9; }
+.activity-event-icon.amber { color: #9a661c; background: #fff3dc; }
+.activity-event-icon.purple { color: #705295; background: #f1ebf8; }
+.activity-event-copy { min-width: 0; display: grid; align-content: start; gap: 4px; }
+.activity-event-copy p { margin: 0; color: #4f5f55; font-size: 10px; line-height: 1.8; }
+.activity-event-copy p strong { color: var(--foreground); font-size: 11px; }
+.activity-event-copy > span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: #6c7b72; font-size: 9px; }
+.activity-event-copy time { color: #9aa39d; font-size: 8px; }
+
 /* Login */
 .login-page { position: relative; min-height: 100svh; overflow: hidden; display: grid; grid-template-columns: minmax(420px, .88fr) minmax(510px, 1.12fr); background: #eef1ed; }
 .login-panel { position: relative; z-index: 2; padding: 32px clamp(32px,7vw,105px) 24px; background: #f9faf8; display: flex; flex-direction: column; justify-content: center; }
@@ -922,6 +988,16 @@ button { cursor: pointer; }
   .customer-detail-layout { grid-template-columns: 1fr; }
   .repair-item-card { grid-template-columns: auto minmax(0,1fr); }
   .repair-deliver-button { grid-column: 1 / -1; width: 100%; }
+  .review-summary { grid-template-columns: repeat(2,1fr); }
+  .activity-summary { grid-template-columns: 1fr; }
+  .review-toolbar, .activity-toolbar { align-items: stretch; flex-direction: column; }
+  .review-filters, .activity-toolbar > div { overflow-x: auto; padding-bottom: 2px; }
+  .review-toolbar > label, .activity-toolbar > label { width: 100%; }
+  .review-card-main { grid-template-columns: 1fr; gap: 13px; }
+  .review-card > footer { display: grid; grid-template-columns: 1fr 1fr; }
+  .review-card > footer button { justify-content: center; }
+  .review-card > footer .review-reject { grid-column: 1 / -1; }
+  .activity-timeline { padding-inline: 14px; }
   .jalali-picker-panel { position: fixed; z-index: 110; top: 50%; right: 16px; left: 16px; width: auto; transform: translateY(-50%); }
   .real-report-list { grid-template-columns: 1fr; padding: 10px; }
   .employees-list article { grid-template-columns: auto minmax(0,1fr) auto; }
