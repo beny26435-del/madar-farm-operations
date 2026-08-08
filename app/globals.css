@@ -399,13 +399,15 @@ button { cursor: pointer; }
 .wizard-card > header strong { font-size: 15px; }
 .wizard-card > header small { color: var(--muted-foreground); font-size: 10px; }
 .wizard-fields { min-height: 405px; padding: 26px 28px 30px; display: grid; align-content: start; gap: 21px; }
+.daily-report-wizard-card { overflow: visible; }
+.daily-report-wizard-card .wizard-fields { min-height: 0; }
 .form-intro-icon { display: none; }
 .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
 .time-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 .form-grid-wide { grid-column: 1 / -1; }
 .time-text-input { text-align: center; letter-spacing: .08em; font-variant-numeric: tabular-nums; }
 .field-help { margin-top: 5px; color: var(--subtle-foreground); font-size: 9px; line-height: 1.7; }
-.required-mark { margin-right: 6px; color: #8b5c32; font-size: 8px; font-weight: 650; }
+.required-mark { margin-right: 6px; padding: 2px 6px; border-radius: 999px; color: #805b32; background: #fff5e8; font-size: 8px; font-weight: 700; }
 .report-owner-card { padding: 14px; border: 1px solid #dfe7df; border-radius: 13px; background: #f8faf7; display: flex; align-items: center; gap: 11px; }
 .report-owner-card > span { width: 42px; height: 42px; flex: 0 0 auto; border-radius: 12px; color: #52675a; background: #e6ece6; display: grid; place-items: center; }
 .report-owner-card > span svg { width: 19px; }
@@ -421,7 +423,7 @@ button { cursor: pointer; }
 .jalali-picker-trigger.selected { color: var(--foreground); font-weight: 650; }
 .jalali-picker-trigger > svg { width: 17px; color: #718079; }
 .jalali-picker-trigger > svg:last-child { margin-right: auto; width: 14px; }
-.jalali-picker-panel { position: absolute; z-index: 30; top: calc(100% + 8px); right: 0; width: 320px; padding: 13px; border: 1px solid var(--border); border-radius: 15px; background: #fff; box-shadow: 0 18px 45px rgba(25,39,31,.16); }
+.jalali-picker-panel { position: absolute; z-index: 30; top: calc(100% + 8px); right: 0; width: 340px; padding: 15px; border: 1px solid var(--border); border-radius: 15px; background: #fff; box-shadow: 0 18px 45px rgba(25,39,31,.16); }
 .jalali-picker-header { margin-bottom: 10px; display: grid; grid-template-columns: 34px 1fr 34px; align-items: center; gap: 7px; }
 .jalali-picker-header strong { text-align: center; font-size: 12px; }
 .jalali-picker-header button { width: 34px; height: 34px; border: 0; border-radius: 9px; background: #f2f5f2; color: #617067; display: grid; place-items: center; }
@@ -429,8 +431,8 @@ button { cursor: pointer; }
 .jalali-picker-header svg { width: 15px; }
 .jalali-weekdays, .jalali-days { display: grid; grid-template-columns: repeat(7,1fr); direction: rtl; }
 .jalali-weekdays { margin-bottom: 5px; }
-.jalali-weekdays span { height: 25px; color: #9aa49e; display: grid; place-items: center; font-size: 9px; font-weight: 700; }
-.jalali-days button, .jalali-days > span { aspect-ratio: 1; border: 0; border-radius: 9px; background: transparent; display: grid; place-items: center; font-size: 10px; }
+.jalali-weekdays span { height: 28px; color: #89958e; display: grid; place-items: center; font-size: 10px; font-weight: 700; }
+.jalali-days button, .jalali-days > span { aspect-ratio: 1; border: 0; border-radius: 9px; background: transparent; display: grid; place-items: center; font-size: 11px; }
 .jalali-days button { color: #4f5e55; }
 .jalali-days button:hover { background: #eef3ed; }
 .jalali-days button.today { box-shadow: inset 0 0 0 1px #a9b8ad; }

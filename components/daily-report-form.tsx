@@ -128,7 +128,7 @@ export function DailyReportForm({ displayName }: { displayName: string }) {
             <div className="draft-box"><ShieldCheck /><div><strong>ثبت امن اطلاعات</strong><small>نام شما مستقیماً از حساب کاربری خوانده می‌شود.</small></div></div>
           </aside>
 
-          <section className="wizard-card surface">
+          <section className="wizard-card daily-report-wizard-card surface">
             <header><span>{faNumber(step + 1)}</span><div><strong>{steps[step]}</strong><small>فیلدهای ضروری با علامت مشخص شده‌اند.</small></div></header>
             <div className="wizard-fields">
               {step === 0 && <>
