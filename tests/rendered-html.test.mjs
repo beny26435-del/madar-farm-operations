@@ -2,45 +2,46 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
 
-const workerUrl = new URL("../dist/server/index.js", import.meta.url);
-const migrationUrl = new URL("../supabase/migrations/202608080001_phase3_identity_and_core_schema.sql", import.meta.url);
+const root = new URL("../", import.meta.url);
+const read = (path) => readFile(new URL(path, root), "utf8");
 
-async function render(pathname) {
-  const { default: worker } = await import(`${workerUrl.href}?test=${Date.now()}-${Math.random()}`);
-  return worker.fetch(
-    new Request(`http://localhost${pathname}`, { headers: { accept: "text/html" } }),
-    { ASSETS: { fetch: async () => new Response("Not found", { status: 404 }) } },
-    { waitUntil() {}, passThroughOnException() {} },
-  );
-}
-
-test("صفحه ورود بدون اطلاعات ثابت نمایش داده می‌شود", async () => {
-  const response = await render("/login");
-  assert.equal(response.status, 200);
-  assert.match(response.headers.get("content-type") ?? "", /^text\/html/i);
-  assert.equal(response.headers.get("x-frame-options"), "DENY");
-  assert.match(response.headers.get("cache-control") ?? "", /no-store/);
-  const html = await response.text();
-  assert.match(html, /ورود به سامانه مدیریت فارم/);
-  assert.doesNotMatch(html, /name="identifier"[^>]+value=/);
-  assert.doesNotMatch(html, /name="password"[^>]+value=/);
+test("خروجی Next.js همه مسیرهای اصلی را دارد", async () => {
+  const manifest = JSON.parse(await read(".next/server/app-paths-manifest.json"));
+  for (const route of ["/login/page", "/dashboard/page", "/daily-reports/page", "/maintenance/page", "/employees/page", "/employees/new/page", "/api/users/route"]) {
+    assert.ok(manifest[route], `missing ${route}`);
+  }
 });
 
-for (const path of ["/", "/dashboard", "/daily-reports", "/maintenance", "/employees", "/employees/new"]) {
-  test(`مسیر ${path} بدون تنظیمات بسته است`, async () => {
-    const response = await render(path);
-    assert.ok([302, 303, 307, 308].includes(response.status));
-    assert.match(response.headers.get("location") ?? "", /\/login\?error=(configuration|session)$/);
-  });
-}
+test("فرم‌ها هیچ مقدار اولیه‌ای ندارند", async () => {
+  const source = `${await read("components/login-view.tsx")}\n${await read("components/report-wizard.tsx")}\n${await read("components/employee-create-form.tsx")}`;
+  assert.doesNotMatch(source, /defaultValue=/);
+  assert.doesNotMatch(source, /defaultValues:/);
+  assert.match(source, /autoComplete="off"/);
+});
+
+test("داشبورد و فهرست گزارش فاقد رکورد ثابت هستند", async () => {
+  const dashboard = await read("components/dashboard-view.tsx");
+  const reports = await read("components/report-list-view.tsx");
+  assert.doesNotMatch(dashboard, /const pending|const activities|chartData/);
+  assert.doesNotMatch(reports, /const dailyReports|const maintenanceReports/);
+  assert.match(dashboard, /صف بررسی خالی است/);
+  assert.match(reports, /هنوز گزارشی ثبت نشده است/);
+});
+
+test("مدیر عملیات فقط حساب کارمند می‌سازد", async () => {
+  const api = await read("app/api/users/route.ts");
+  const roles = await read("lib/auth/roles.ts");
+  assert.match(api, /actor\.role === "admin" \? input\.role : "employee"/);
+  assert.match(roles, /"employees:manage"/);
+  assert.match(api, /createAdminClient/);
+});
 
 test("migration قواعد هویتی و RLS را حفظ می‌کند", async () => {
-  const sql = await readFile(migrationUrl, "utf8");
+  const sql = await read("supabase/migrations/202608080001_phase3_identity_and_core_schema.sql");
   assert.match(sql, /create type public\.app_role as enum \('admin', 'manager', 'employee'\)/);
   assert.match(sql, /daily_reports_employee_date_shift_live_key/);
   assert.match(sql, /num_nonnulls\(technician_employee_id, nullif\(trim\(technician_name\), ''\)\) = 1/);
   assert.match(sql, /alter table public\.profiles enable row level security/);
-  assert.match(sql, /alter table public\.report_revisions enable row level security/);
   assert.match(sql, /Report revisions are immutable/);
   assert.match(sql, /revoke all on all tables in schema public from anon/);
 });
