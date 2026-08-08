@@ -16,13 +16,17 @@ function Field({ label, placeholder, type = "text", hint }: { label: string; pla
   return <label className="field"><span className="field-label">{label}{hint && <span className="field-hint">{hint}</span>}</span><input className="input" type={type} placeholder={placeholder} autoComplete="off" /></label>;
 }
 
+function TimeField({ label }: { label: string }) {
+  return <label className="field"><span className="field-label">{label}<span className="field-hint">۲۴ ساعته</span></span><input className="input time-text-input" type="text" inputMode="numeric" autoComplete="off" placeholder="مثلاً 08:30" maxLength={5} dir="ltr" /><small className="field-help">ساعت را با قالب 08:30 تایپ کنید.</small></label>;
+}
+
 function TextField({ label, placeholder, hint }: { label: string; placeholder: string; hint?: string }) {
   return <label className="field"><span className="field-label">{label}{hint && <span className="field-hint">{hint}</span>}</span><textarea className="textarea" placeholder={placeholder} autoComplete="off" /></label>;
 }
 
 function UploadField({ variant = "general" }: { variant?: "general" | "before" | "after" }) {
   const [files, setFiles] = useState<File[]>([]);
-  const title = variant === "before" ? "تصاویر قبل از تعمیر" : variant === "after" ? "تصاویر بعد از تعمیر" : "تصاویر شیفت";
+  const title = variant === "before" ? "تصاویر قبل از تعمیر" : variant === "after" ? "تصاویر بعد از تعمیر" : "تصاویر گزارش";
   return (
     <div className="upload-field">
       <span className="field-label">{title}<span className="field-hint">حداکثر ۸ تصویر</span></span>
@@ -45,7 +49,7 @@ export function ReportWizard({ type }: { type: "daily" | "maintenance" }) {
 
   const content = useMemo(() => {
     if (!maintenance) {
-      if (step === 0) return <><div className="form-intro-icon"><CalendarDays /></div><div className="form-grid"><Field label="نام کارمند" placeholder="نام کارمند را وارد کنید" /><Field label="تاریخ گزارش" type="date" /><SelectField label="شیفت"><option value="">انتخاب شیفت</option><option value="morning">صبح</option><option value="evening">عصر</option><option value="night">شب</option></SelectField><div className="time-row"><Field label="ساعت ورود" type="time" /><Field label="ساعت خروج" type="time" /></div></div><div className="form-note"><ShieldCheck /><p><strong>تمام فیلدها بدون مقدار اولیه هستند.</strong><span>فقط اطلاعات همان شیفت را وارد کنید.</span></p></div></>;
+      if (step === 0) return <><div className="form-intro-icon"><CalendarDays /></div><div className="form-grid"><Field label="نام کارمند" placeholder="نام کارمند را وارد کنید" /><Field label="تاریخ گزارش" type="date" /><div className="time-row form-grid-wide"><TimeField label="ساعت ورود" /><TimeField label="ساعت خروج" /></div></div><div className="form-note"><ShieldCheck /><p><strong>ورود ساعت ساده و دستی است.</strong><span>ساعت شروع و پایان کار را خودتان با قالب ۲۴ ساعته تایپ کنید.</span></p></div></>;
       if (step === 1) return <><div className="form-intro-icon"><FileText /></div><TextField label="فعالیت‌های انجام‌شده" placeholder="فعالیت‌های انجام‌شده را وارد کنید" hint="الزامی" /><div className="writing-tip"><span>پیشنهاد</span> فعالیت‌ها را کوتاه، روشن و به ترتیب انجام بنویسید تا بررسی سریع‌تر شود.</div></>;
       if (step === 2) return <><div className="form-intro-icon"><Wrench /></div><TextField label="مشکلات مشاهده‌شده" placeholder="مشکلات مشاهده‌شده را وارد کنید" /><TextField label="اقدامات انجام‌شده" placeholder="اقدامات انجام‌شده را وارد کنید" /></>;
       return <><div className="form-intro-icon"><ImageIcon /></div><UploadField /><TextField label="توضیحات تکمیلی" placeholder="توضیحات تکمیلی را وارد کنید" hint="اختیاری" /><div className="file-attachment"><Paperclip /><div><strong>فایل پیوست</strong><small>PDF، Word یا Excel تا ۱۰ مگابایت</small></div><label className="button button-secondary">انتخاب فایل<input type="file" hidden /></label></div></>;
@@ -67,7 +71,7 @@ export function ReportWizard({ type }: { type: "daily" | "maintenance" }) {
     <div className="app-page wizard-page">
       <div className="wizard-container">
         <div className="wizard-topline"><Link href={cancelHref} className="back-link"><ArrowRight /> بازگشت</Link></div>
-        <div className="wizard-heading"><div><span className="eyebrow">{maintenance ? <><Wrench /> فرم عملیات فنی</> : <><CalendarDays /> فرم پایان شیفت</>}</span><h1>{maintenance ? "ثبت گزارش تعمیرات" : "گزارش کار روزانه"}</h1><p>اطلاعات را مرحله‌به‌مرحله و بدون مقدار اولیه وارد کنید.</p></div></div>
+        <div className="wizard-heading"><div><span className="eyebrow">{maintenance ? <><Wrench /> فرم عملیات فنی</> : <><CalendarDays /> فرم گزارش روزانه</>}</span><h1>{maintenance ? "ثبت گزارش تعمیرات" : "گزارش کار روزانه"}</h1><p>اطلاعات را مرحله‌به‌مرحله و بدون مقدار اولیه وارد کنید.</p></div></div>
         <div className="mobile-progress"><div><span>مرحله {faNumber(step + 1)} از {faNumber(steps.length)}</span><strong>{steps[step]}</strong></div><em>{faNumber(Math.round(((step + 1) / steps.length) * 100))}٪</em><span className="progress-track"><i style={{ width: progress }} /></span></div>
         <div className="wizard-layout">
           <aside className="wizard-steps surface">

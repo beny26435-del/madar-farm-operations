@@ -9,29 +9,11 @@ import { z } from "zod";
 import { createClient } from "@/lib/supabase/client";
 
 const loginSchema = z.object({
-  identifier: z.string().trim().min(1, "شماره موبایل یا ایمیل را وارد کنید."),
+  email: z.string().trim().email("یک ایمیل معتبر وارد کنید."),
   password: z.string().min(8, "رمز عبور باید دست‌کم ۸ نویسه باشد."),
 });
 
 type LoginValues = z.infer<typeof loginSchema>;
-
-const digitMap: Record<string, string> = {
-  "۰": "0", "۱": "1", "۲": "2", "۳": "3", "۴": "4",
-  "۵": "5", "۶": "6", "۷": "7", "۸": "8", "۹": "9",
-  "٠": "0", "١": "1", "٢": "2", "٣": "3", "٤": "4",
-  "٥": "5", "٦": "6", "٧": "7", "٨": "8", "٩": "9",
-};
-
-function normalizeDigits(value: string) {
-  return value.replace(/[۰-۹٠-٩]/g, (digit) => digitMap[digit]);
-}
-
-function normalizePhone(value: string) {
-  const normalized = normalizeDigits(value).replace(/[^\d+]/g, "");
-  if (normalized.startsWith("09")) return `+98${normalized.slice(1)}`;
-  if (normalized.startsWith("98")) return `+${normalized}`;
-  return normalized;
-}
 
 export function LoginView({ setupRequired, initialMessage }: { setupRequired: boolean; initialMessage: string | null }) {
   const router = useRouter();
@@ -51,11 +33,7 @@ export function LoginView({ setupRequired, initialMessage }: { setupRequired: bo
     }
 
     const supabase = createClient();
-    const identifier = normalizeDigits(values.identifier.trim());
-    const credentials = identifier.includes("@")
-      ? { email: identifier.toLowerCase(), password: values.password }
-      : { phone: normalizePhone(identifier), password: values.password };
-    const { data, error } = await supabase.auth.signInWithPassword(credentials);
+    const { data, error } = await supabase.auth.signInWithPassword({ email: values.email.trim().toLowerCase(), password: values.password });
 
     if (error || !data.user) {
       setFormMessage("اطلاعات ورود درست نیست یا حساب شما در دسترس نیست.");
@@ -83,7 +61,7 @@ export function LoginView({ setupRequired, initialMessage }: { setupRequired: bo
       <div className="login-ambient ambient-one" /><div className="login-ambient ambient-two" />
       <section className="login-visual" aria-label="نمای عملیات فارم">
         <div className="login-brand"><span className="brand-mark"><Hexagon /><i /></span><div><strong>مدار</strong><small>مرکز عملیات فارم</small></div></div>
-        <div className="visual-copy"><span>سامانه یکپارچه عملیات</span><h1>هر شیفت،<br />روشن و قابل پیگیری.</h1><p>از گزارش روزانه تا تعمیر و نگهداری؛ همه‌چیز در یک جریان منظم و دقیق.</p></div>
+        <div className="visual-copy"><span>سامانه یکپارچه عملیات</span><h1>هر روز،<br />روشن و قابل پیگیری.</h1><p>از گزارش روزانه تا تعمیر و نگهداری؛ همه‌چیز در یک جریان منظم و دقیق.</p></div>
         <div className="operation-orbit">
           <div className="orbit-line orbit-line-one" /><div className="orbit-line orbit-line-two" />
           <div className="core"><Hexagon /><i /></div>
@@ -97,7 +75,7 @@ export function LoginView({ setupRequired, initialMessage }: { setupRequired: bo
         <div className="login-form-wrap">
           <div className="login-heading"><span className="login-kicker">ورود امن کارکنان</span><h2>ورود به سامانه مدیریت فارم</h2><p>برای ادامه، اطلاعات حساب سازمانی خود را وارد کنید.</p></div>
           <form onSubmit={handleSubmit(submit)} className="login-form" noValidate autoComplete="off">
-            <label className="field"><span className="field-label">شماره موبایل یا ایمیل</span><span className="login-input-wrap"><input className="input" inputMode="email" autoComplete="off" placeholder="شماره موبایل یا ایمیل خود را وارد کنید" aria-invalid={Boolean(errors.identifier)} {...register("identifier")} /><UserRound /></span>{errors.identifier && <small className="field-error">{errors.identifier.message}</small>}</label>
+            <label className="field"><span className="field-label">ایمیل</span><span className="login-input-wrap"><input className="input" type="email" inputMode="email" autoCapitalize="none" autoComplete="off" placeholder="ایمیل خود را وارد کنید" dir="ltr" aria-invalid={Boolean(errors.email)} {...register("email")} /><UserRound /></span>{errors.email && <small className="field-error">{errors.email.message}</small>}</label>
             <label className="field"><span className="field-label">رمز عبور <button type="button" onClick={() => setFormMessage("برای بازیابی رمز عبور با مدیر سیستم تماس بگیرید.")}>فراموش کرده‌اید؟</button></span><span className="login-input-wrap"><input className="input" type={visible ? "text" : "password"} autoComplete="new-password" placeholder="رمز عبور" aria-invalid={Boolean(errors.password)} {...register("password")} /><LockKeyhole /><button className="password-toggle" type="button" aria-label={visible ? "مخفی کردن رمز" : "نمایش رمز"} onClick={() => setVisible(!visible)}>{visible ? <EyeOff /> : <Eye />}</button></span>{errors.password && <small className="field-error">{errors.password.message}</small>}</label>
             {formMessage && <p className="login-message" role="alert">{formMessage}</p>}
             <button className={`button button-primary login-submit ${isSubmitting ? "loading" : ""}`} disabled={isSubmitting || setupRequired}>{isSubmitting ? <><span className="button-spinner" /> در حال ورود...</> : <>ورود به سامانه <ArrowLeft /></>}</button>

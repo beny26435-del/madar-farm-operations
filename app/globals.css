@@ -394,6 +394,9 @@ button { cursor: pointer; }
 .form-intro-icon { display: none; }
 .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
 .time-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.form-grid-wide { grid-column: 1 / -1; }
+.time-text-input { text-align: center; letter-spacing: .08em; font-variant-numeric: tabular-nums; }
+.field-help { margin-top: 5px; color: var(--subtle-foreground); font-size: 9px; line-height: 1.7; }
 .form-note { padding: 13px; border: 1px solid #dfe9c9; border-radius: 11px; background: #f5f8ec; display: flex; gap: 10px; }
 .form-note > svg { width: 18px; color: #708b3f; }
 .form-note p { margin: 0; display: grid; gap: 3px; }
@@ -472,6 +475,21 @@ button { cursor: pointer; }
 .employee-form-card header p { margin: 0; color: var(--muted-foreground); font-size: 11px; }
 .employee-form-card form { display: grid; gap: 20px; }
 .employee-form-card footer { padding-top: 4px; display: flex; justify-content: flex-end; gap: 9px; }
+.employee-form-simple { width: min(100%, 620px); margin-inline: auto; padding: 32px; }
+.employee-form-simple > header { padding-bottom: 22px; border-bottom: 1px solid var(--border); }
+.employee-fields { display: grid; gap: 18px; }
+.field-with-icon { position: relative; display: block; }
+.field-with-icon > svg { position: absolute; z-index: 1; top: 50%; right: 13px; width: 17px; height: 17px; transform: translateY(-50%); color: #89958e; pointer-events: none; }
+.field-with-icon .input { width: 100%; padding-right: 42px; }
+.field-with-icon .input[dir="ltr"] { padding-right: 42px; padding-left: 42px; text-align: left; }
+.password-create-field > button { position: absolute; top: 50%; left: 9px; width: 34px; height: 34px; transform: translateY(-50%); border: 0; border-radius: 9px; display: grid; place-items: center; background: transparent; color: #77847c; }
+.password-create-field > button:hover { background: #f0f3f0; color: var(--foreground); }
+.password-create-field > button svg { width: 16px; }
+.employee-access-note { padding: 14px 15px; border: 1px solid #dce8d6; border-radius: 12px; display: flex; align-items: flex-start; gap: 10px; background: #f5f9f2; }
+.employee-access-note > svg { width: 18px; flex: 0 0 auto; color: #5f824e; }
+.employee-access-note div { display: grid; gap: 4px; }
+.employee-access-note strong { font-size: 11px; }
+.employee-access-note span { color: #6f7d74; font-size: 10px; line-height: 1.7; }
 .form-message { margin: 0; padding: 11px 13px; border-radius: 10px; font-size: 11px; }
 .form-message.success { border: 1px solid #d4e4cf; background: #f5fbf3; color: #37633a; }
 .form-message.error { border: 1px solid #ead5d0; background: #fff8f6; color: #8d352f; }
@@ -700,6 +718,8 @@ button { cursor: pointer; }
   .narrow-page-container { width: 100%; }
   .employee-form-card { padding: 18px; }
   .employee-form-card .form-grid { grid-template-columns: 1fr; }
+  .employee-form-simple { padding: 20px; }
+  .time-row { grid-template-columns: 1fr; }
   .employees-list article { grid-template-columns: auto minmax(0,1fr) auto; }
   .employees-list .employee-role { display: none; }
 }

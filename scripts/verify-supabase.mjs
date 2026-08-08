@@ -11,7 +11,7 @@ assert.ok(url && publishableKey && serviceRoleKey && password, "تنظیمات S
 const service = createClient(url, serviceRoleKey, { auth: { persistSession: false } });
 const [{ count: profileCount, error: profileError }, { count: employeeCount, error: employeeError }] = await Promise.all([
   service.from("profiles").select("id", { count: "exact", head: true }),
-  service.from("employees").select("id", { count: "exact", head: true }),
+  service.from("employees").select("id, email", { count: "exact", head: true }),
 ]);
 
 if (profileError) throw profileError;
@@ -28,13 +28,14 @@ if (signInError) throw signInError;
 
 const [{ data: visibleProfiles, error: visibleProfileError }, { data: visibleEmployees, error: visibleEmployeeError }] = await Promise.all([
   manager.from("profiles").select("id, role"),
-  manager.from("employees").select("id, profile_id"),
+  manager.from("employees").select("id, profile_id, email"),
 ]);
 
 if (visibleProfileError) throw visibleProfileError;
 if (visibleEmployeeError) throw visibleEmployeeError;
 assert.ok(visibleProfiles.some((profile) => profile.role === "manager"));
 assert.ok(visibleEmployees.some((employee) => visibleProfiles.some((profile) => profile.id === employee.profile_id)));
+assert.ok(visibleEmployees.every((employee) => employee.email));
 
 await manager.auth.signOut();
 console.log("اتصال، شمارش حساب‌ها و محدودیت RLS با موفقیت تأیید شد.");

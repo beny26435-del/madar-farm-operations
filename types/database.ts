@@ -26,8 +26,8 @@ export type Database = {
         { display_name?: string; role?: AppRole; avatar_path?: string | null; is_active?: boolean }
       >;
       employees: Table<
-        { id: string; profile_id: string | null; personnel_code: string; full_name: string; mobile: string | null; status: "active" | "inactive"; created_at: string; updated_at: string },
-        { profile_id?: string | null; personnel_code: string; full_name: string; mobile?: string | null; status?: "active" | "inactive" }
+        { id: string; profile_id: string | null; full_name: string; email: string; status: "active" | "inactive"; created_at: string; updated_at: string },
+        { profile_id?: string | null; full_name: string; email: string; status?: "active" | "inactive" }
       >;
     };
     Views: Record<never, never>;

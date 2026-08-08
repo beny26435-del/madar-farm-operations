@@ -17,6 +17,8 @@ test("فرم‌ها هیچ مقدار اولیه‌ای ندارند", async () 
   assert.doesNotMatch(source, /defaultValue=/);
   assert.doesNotMatch(source, /defaultValues:/);
   assert.match(source, /autoComplete="off"/);
+  assert.doesNotMatch(source, /type="time"/);
+  assert.match(source, /placeholder="مثلاً 08:30"/);
 });
 
 test("داشبورد و فهرست گزارش فاقد رکورد ثابت هستند", async () => {
@@ -28,18 +30,25 @@ test("داشبورد و فهرست گزارش فاقد رکورد ثابت هس�
   assert.match(reports, /هنوز گزارشی ثبت نشده است/);
 });
 
-test("مدیر عملیات فقط حساب کارمند می‌سازد", async () => {
+test("مدیر فقط با نام، ایمیل و رمز حساب کارمند می‌سازد", async () => {
   const api = await read("app/api/users/route.ts");
+  const form = await read("components/employee-create-form.tsx");
   const roles = await read("lib/auth/roles.ts");
-  assert.match(api, /actor\.role === "admin" \? input\.role : "employee"/);
+  assert.match(api, /role: "employee"/);
+  assert.doesNotMatch(form, /personnelCode|mobile|register\("role"\)/);
+  assert.doesNotMatch(api, /personnelCode|normalizePhone|input\.role/);
   assert.match(roles, /"employees:manage"/);
   assert.match(api, /createAdminClient/);
 });
 
 test("migration قواعد هویتی و RLS را حفظ می‌کند", async () => {
   const sql = await read("supabase/migrations/202608080001_phase3_identity_and_core_schema.sql");
+  const cleanup = await read("supabase/migrations/202608080002_remove_shifts_and_simplify_employees.sql");
   assert.match(sql, /create type public\.app_role as enum \('admin', 'manager', 'employee'\)/);
-  assert.match(sql, /daily_reports_employee_date_shift_live_key/);
+  assert.match(cleanup, /drop column shift/);
+  assert.match(cleanup, /daily_reports_employee_date_live_key/);
+  assert.match(cleanup, /drop column personnel_code/);
+  assert.match(cleanup, /drop column mobile/);
   assert.match(sql, /num_nonnulls\(technician_employee_id, nullif\(trim\(technician_name\), ''\)\) = 1/);
   assert.match(sql, /alter table public\.profiles enable row level security/);
   assert.match(sql, /Report revisions are immutable/);

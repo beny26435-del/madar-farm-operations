@@ -17,7 +17,7 @@ export default async function EmployeesPage() {
 
   const supabase = await createClient();
   const [{ data: employees, error }, { data: profiles }] = await Promise.all([
-    supabase.from("employees").select("id, profile_id, personnel_code, full_name, mobile, status").order("created_at", { ascending: true }),
+    supabase.from("employees").select("id, profile_id, full_name, email, status").order("created_at", { ascending: true }),
     supabase.from("profiles").select("id, role"),
   ]);
   const roles = new Map((profiles ?? []).map((profile) => [profile.id, profile.role]));
@@ -33,7 +33,7 @@ export default async function EmployeesPage() {
           <section className="surface employees-panel">
             {error ? <ErrorState /> : employees?.length ? <div className="employees-list">{employees.map((employee) => {
               const role = employee.profile_id ? roles.get(employee.profile_id) : undefined;
-              return <article key={employee.id}><span className="list-avatar"><UserRound /></span><div><strong>{employee.full_name}</strong><small>{employee.personnel_code}{employee.mobile ? ` · ${employee.mobile}` : ""}</small></div><span className="employee-role">{role ? roleLabels[role] : "بدون حساب ورود"}</span><StatusBadge tone={employee.status === "active" ? "active" : "cancelled"}>{employee.status === "active" ? "فعال" : "غیرفعال"}</StatusBadge></article>;
+              return <article key={employee.id}><span className="list-avatar"><UserRound /></span><div><strong>{employee.full_name}</strong><small dir="ltr">{employee.email}</small></div><span className="employee-role">{role ? roleLabels[role] : "بدون حساب ورود"}</span><StatusBadge tone={employee.status === "active" ? "active" : "cancelled"}>{employee.status === "active" ? "فعال" : "غیرفعال"}</StatusBadge></article>;
             })}</div> : <EmptyState title="هنوز کاربری ساخته نشده است" description="برای افزودن نخستین کارمند از دکمه ساخت کاربر استفاده کنید." action={hasPermission(viewer.role, "employees:manage") ? <Link href="/employees/new" className="button button-secondary"><Plus /> ساخت کاربر</Link> : undefined} />}
           </section>
         </div>

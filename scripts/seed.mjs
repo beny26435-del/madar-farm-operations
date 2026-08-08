@@ -17,7 +17,7 @@ const supabase = createClient(supabaseUrl, serviceRoleKey, {
 });
 
 const accounts = [
-  { email: "milad@madar.ir", name: "میلاد", role: "manager", code: "MGR-001", mobile: "+989100000002" },
+  { email: "milad@madar.ir", name: "میلاد", role: "manager" },
 ];
 
 async function findUser(email) {
@@ -36,18 +36,14 @@ for (const account of accounts) {
   if (!user) {
     const { data, error } = await supabase.auth.admin.createUser({
       email: account.email,
-      phone: account.mobile,
       password: defaultPassword,
       email_confirm: true,
-      phone_confirm: true,
       user_metadata: { display_name: account.name },
     });
     if (error) throw error;
     user = data.user;
-  } else if (user.phone !== account.mobile || user.user_metadata?.display_name !== account.name) {
+  } else if (user.user_metadata?.display_name !== account.name) {
     const { data, error } = await supabase.auth.admin.updateUserById(user.id, {
-      phone: account.mobile,
-      phone_confirm: true,
       user_metadata: { ...user.user_metadata, display_name: account.name },
     });
     if (error) throw error;
@@ -64,9 +60,8 @@ for (const account of accounts) {
 
   const { error: employeeError } = await supabase.from("employees").upsert({
     profile_id: user.id,
-    personnel_code: account.code,
     full_name: account.name,
-    mobile: account.mobile,
+    email: account.email,
     status: "active",
   }, { onConflict: "profile_id" });
   if (employeeError) throw employeeError;

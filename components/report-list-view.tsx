@@ -15,7 +15,7 @@ export function ReportListView({ type }: { type: "daily" | "maintenance" }) {
     <div className="app-page reports-page">
       <div className="page-container">
         <div className="page-heading reports-heading">
-          <div><span className="eyebrow">{maintenance ? <><Wrench /> عملیات نگهداری</> : <><CalendarDays /> عملکرد شیفت‌ها</>}</span><h1>{maintenance ? "تعمیرات و سرویس" : "گزارش‌های روزانه"}</h1><p>{maintenance ? "درخواست‌ها و اقدامات واقعی تعمیرات در این بخش قرار می‌گیرند." : "گزارش‌های ثبت‌شدهٔ کارکنان در این بخش قرار می‌گیرند."}</p></div>
+          <div><span className="eyebrow">{maintenance ? <><Wrench /> عملیات نگهداری</> : <><CalendarDays /> عملکرد روزانه</>}</span><h1>{maintenance ? "تعمیرات و سرویس" : "گزارش‌های روزانه"}</h1><p>{maintenance ? "درخواست‌ها و اقدامات واقعی تعمیرات در این بخش قرار می‌گیرند." : "گزارش‌های ثبت‌شدهٔ کارکنان در این بخش قرار می‌گیرند."}</p></div>
           <div className="heading-actions"><button className="button button-secondary mobile-hide" disabled title="داده‌ای برای دریافت وجود ندارد"><Download /> خروجی</button><Link href={newHref} className="button button-primary"><Plus /> {maintenance ? "ثبت تعمیرات" : "گزارش جدید"}</Link></div>
         </div>
 

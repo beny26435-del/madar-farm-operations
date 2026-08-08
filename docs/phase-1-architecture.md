@@ -100,7 +100,6 @@ flowchart LR
 ```text
 user_role: admin | manager | employee
 employee_status: active | inactive
-shift_type: morning | evening | night | flexible
 report_status: draft | submitted | under_review | revision_requested | approved | rejected
 maintenance_work_status: initial | awaiting_review | in_progress | needs_part | completed | cancelled
 attachment_kind: daily_image | maintenance_before | maintenance_after | document
@@ -131,16 +130,11 @@ notification_type: report_submitted | report_approved | report_rejected | revisi
 | ستون | نوع | قاعده |
 |---|---|---|
 | `id` | uuid PK | شناسهٔ دامنه‌ای |
-| `profile_id` | uuid nullable unique FK | امکان ثبت کارمند پیش از ساخت حساب |
-| `first_name`, `last_name` | text | الزامی |
-| `mobile` | text unique | normalize شده |
-| `email` | citext nullable unique |  |
-| `default_shift` | shift_type nullable |  |
-| `started_on` | date | تاریخ استاندارد |
+| `profile_id` | uuid unique FK | حساب ورود کارمند |
+| `full_name` | text | الزامی |
+| `email` | citext unique | ایمیل ورود |
 | `status` | employee_status | فعال/غیرفعال |
-| `notes` | text nullable |  |
-| `created_by` | uuid FK |  |
-| `created_at`, `updated_at`, `deleted_at` | timestamptz | soft delete |
+| `created_at`, `updated_at` | timestamptz | UTC |
 
 #### `daily_reports`
 
@@ -149,8 +143,7 @@ notification_type: report_submitted | report_approved | report_rejected | revisi
 | `id` | uuid PK |  |
 | `employee_id` | uuid FK | مالک گزارش |
 | `report_date` | date | index مرکب با employee |
-| `shift` | shift_type |  |
-| `start_time`, `end_time` | time | پایان می‌تواند روز بعد باشد |
+| `start_time`, `end_time` | time | ساعت شروع و پایان با ورود دستی |
 | `activities`, `problems`, `actions_taken`, `notes` | text nullable | activities در ارسال نهایی الزامی |
 | `status` | report_status | ماشین وضعیت |
 | `revision_no` | integer | پیش‌فرض 1 |
@@ -158,7 +151,7 @@ notification_type: report_submitted | report_approved | report_rejected | revisi
 | `submitted_at`, `approved_at` | timestamptz nullable |  |
 | `created_at`, `updated_at`, `deleted_at` | timestamptz |  |
 
-قید یکتایی گزارش روزانه روی `(employee_id, report_date, shift)` است تا یک کارمند بتواند در یک روز تقویمی، برای چند شیفت واقعی گزارش مستقل ثبت کند.
+قید یکتایی گزارش روزانه روی `(employee_id, report_date)` است؛ برای هر کارمند در هر روز یک گزارش ثبت می‌شود.
 
 #### `maintenance_reports`
 
@@ -277,7 +270,7 @@ erDiagram
 
 ### indexهای کلیدی
 
-- unique جزئی روی `daily_reports(employee_id, report_date, shift)` برای رکوردهای حذف‌نشده و index روی `(status, submitted_at desc)`
+- unique جزئی روی `daily_reports(employee_id, report_date)` برای رکوردهای حذف‌نشده و index روی `(status, submitted_at desc)`
 - `maintenance_reports(review_status, report_date desc)` و `(work_status, report_date desc)`
 - GIN/trigram روی عنوان، شناسهٔ تجهیز و شرح تعمیر؛ جست‌وجوی نام کارکنان با index مناسب
 - `report_reviews(daily_report_id, created_at)` و معادل تعمیرات
@@ -552,7 +545,7 @@ docs/
 5. تجربهٔ موبایل component و layout اختصاصی دارد، نه جدول دسکتاپ کوچک‌شده.
 6. تجهیزات در V1 متن آزاد می‌مانند و هیچ قابلیت مدیریت/مانیتورینگ ماینر ساخته نمی‌شود.
 7. فاز ۲ فقط shell، tokenها، componentهای پایه و login را می‌سازد؛ اتصال auth/database در فاز ۳ انجام می‌شود.
-8. یکتایی گزارش روزانه بر اساس کارمند، تاریخ و شیفت است؛ تکنسین تعمیرات می‌تواند کارمند داخلی یا نام بیرونی باشد.
+8. یکتایی گزارش روزانه بر اساس کارمند و تاریخ است؛ تکنسین تعمیرات می‌تواند کارمند داخلی یا نام بیرونی باشد.
 9. هر نسخهٔ ارسال‌شده پیش از اصلاح به‌صورت snapshot immutable نگهداری می‌شود.
 
 ## معیار پذیرش فاز ۱

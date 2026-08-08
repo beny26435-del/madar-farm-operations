@@ -11,5 +11,5 @@ export const dynamic = "force-dynamic";
 export default async function NewEmployeePage() {
   const viewer = await requireViewer();
   if (!hasPermission(viewer.role, "employees:manage")) redirect("/dashboard");
-  return <AppShell viewer={viewer}><EmployeeCreateForm actorRole={viewer.role} /></AppShell>;
+  return <AppShell viewer={viewer}><EmployeeCreateForm /></AppShell>;
 }
