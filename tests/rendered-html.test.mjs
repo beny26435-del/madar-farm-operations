@@ -8,7 +8,7 @@ const read = (path) => readFile(new URL(path, root), "utf8");
 
 test("خروجی Next.js همه مسیرهای اصلی را دارد", async () => {
   const manifest = JSON.parse(await read(".next/server/app-paths-manifest.json"));
-  for (const route of ["/login/page", "/dashboard/page", "/daily-reports/page", "/maintenance/page", "/employees/page", "/employees/new/page", "/api/users/route", "/api/daily-reports/route"]) {
+  for (const route of ["/login/page", "/dashboard/page", "/daily-reports/page", "/maintenance/page", "/employees/page", "/employees/new/page", "/customers/page", "/customers/new/page", "/customers/[id]/page", "/api/users/route", "/api/daily-reports/route", "/api/customers/route", "/api/customers/[id]/items/route", "/api/customers/[id]/items/[itemId]/route"]) {
     assert.ok(manifest[route], `missing ${route}`);
   }
 });
@@ -43,6 +43,22 @@ test("گزارش روزانه واقعاً در Supabase ثبت می‌شود", 
   assert.match(api, /status: "submitted"/);
   assert.match(form, /fetch\("\/api\/daily-reports"/);
   assert.doesNotMatch(form, /نام کارمند.*input/s);
+});
+
+test("مرحله سوم مخارج اختیاری و فاکتور تصویری را ذخیره می‌کند", async () => {
+  const api = await read("app/api/daily-reports/route.ts");
+  const form = await read("components/daily-report-form.tsx");
+  const list = await read("components/report-list-view.tsx");
+  const migration = await read("supabase/migrations/202608080004_daily_report_expenses.sql");
+  assert.match(form, /const steps = \["زمان و تاریخ", "شرح فعالیت", "مخارج"\]/);
+  assert.match(form, /type="file"/);
+  assert.match(form, /payload\.append\("expenses"/);
+  assert.doesNotMatch(form, /توضیحات تکمیلی|مشکلات مشاهده‌شده|اقدامات انجام‌شده/);
+  assert.match(api, /storage\.from\("report-invoices"\)\.upload/);
+  assert.match(api, /from\("daily_report_expenses"\)\.insert/);
+  assert.match(list, /report-expenses/);
+  assert.match(migration, /create table public\.daily_report_expenses/);
+  assert.match(migration, /'report-invoices'/);
 });
 
 test("تاریخ با تقویم شمسی و بدون ورودی تایپی انتخاب می‌شود", async () => {
@@ -81,6 +97,24 @@ test("مدیر فقط با نام، ایمیل و رمز حساب کارمند �
   assert.doesNotMatch(api, /personnelCode|normalizePhone|input\.role/);
   assert.match(roles, /"employees:manage"/);
   assert.match(api, /createAdminClient/);
+});
+
+test("پرونده مشتری، اقلام تعمیر و تحویل را با داده واقعی مدیریت می‌کند", async () => {
+  const listPage = await read("app/customers/page.tsx");
+  const detail = await read("components/customer-detail-view.tsx");
+  const createCustomerApi = await read("app/api/customers/route.ts");
+  const itemApi = await read("app/api/customers/[id]/items/route.ts");
+  const deliveryApi = await read("app/api/customers/[id]/items/[itemId]/route.ts");
+  const migration = await read("supabase/migrations/202608080005_customers_and_repair_items.sql");
+  assert.match(listPage, /from\("customers"\)/);
+  assert.match(listPage, /from\("customer_repair_items"\)/);
+  assert.match(detail, /تحویل داده شد/);
+  assert.match(createCustomerApi, /from\("customers"\)\.insert/);
+  assert.match(itemApi, /from\("customer_repair_items"\)\.insert/);
+  assert.match(deliveryApi, /status: "delivered"/);
+  assert.match(migration, /create table public\.customers/);
+  assert.match(migration, /create table public\.customer_repair_items/);
+  assert.match(migration, /alter table public\.customers enable row level security/);
 });
 
 test("migration قواعد هویتی و RLS را حفظ می‌کند", async () => {

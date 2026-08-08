@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   Activity, Bell, CalendarDays, ChevronLeft, ChevronsLeft, ChevronsRight,
-  CircleHelp, FileBarChart, Gauge, Hexagon, Home, LogOut, Menu,
+  CircleHelp, ContactRound, FileBarChart, Gauge, Hexagon, Home, LogOut, Menu,
   Search, Settings, Users, Wrench, X,
 } from "lucide-react";
 import { useState } from "react";
@@ -18,6 +18,7 @@ const nav = [
   { href: "/daily-reports", label: "گزارش روزانه", icon: CalendarDays, permission: "daily-report:write" },
   { href: "/maintenance", label: "تعمیرات و سرویس", icon: Wrench, permission: "maintenance-report:write" },
   { href: "/employees", label: "کارکنان", icon: Users, permission: "employees:view" },
+  { href: "/customers", label: "مشتریان", icon: ContactRound, permission: "customers:view" },
   { href: "/reports", label: "گزارش‌ها", icon: FileBarChart, permission: "reports:review" },
   { href: "/activity", label: "فعالیت‌ها", icon: Activity, permission: "activity:view" },
 ];
@@ -30,6 +31,8 @@ const pageTitles: Record<string, string> = {
   "/maintenance/new": "ثبت گزارش تعمیرات",
   "/employees": "کارکنان",
   "/employees/new": "ساخت کاربر",
+  "/customers": "مشتریان",
+  "/customers/new": "افزودن مشتری",
 };
 
 export function AppShell({ children, viewer }: { children: React.ReactNode; viewer: Viewer }) {
@@ -42,6 +45,7 @@ export function AppShell({ children, viewer }: { children: React.ReactNode; view
   const visibleNav = nav.filter((item) => hasPermission(viewer.role, item.permission as Permission));
   const canManageSettings = hasPermission(viewer.role, "settings:manage");
   const currentDate = new Intl.DateTimeFormat("fa-IR", { weekday: "long", day: "numeric", month: "long", year: "numeric" }).format(new Date());
+  const currentPageTitle = pageTitles[pathname] ?? (pathname.startsWith("/customers/") ? "پرونده مشتری" : "مدار عملیات");
 
   const active = (href: string) => pathname === href || (href !== "/dashboard" && pathname.startsWith(`${href}/`));
 
@@ -79,7 +83,7 @@ export function AppShell({ children, viewer }: { children: React.ReactNode; view
 
       <div className="workspace">
         <header className="topbar">
-          <div className="topbar-title"><span>{currentDate}</span><strong>{pageTitles[pathname] ?? "مدار عملیات"}</strong></div>
+          <div className="topbar-title"><span>{currentDate}</span><strong>{currentPageTitle}</strong></div>
           <div className="topbar-actions">
             <button className="global-search"><Search /><span>جست‌وجو در گزارش‌ها...</span><kbd>⌘ K</kbd></button>
             <span className="topbar-date"><CalendarDays /> {currentDate}</span>
@@ -117,6 +121,7 @@ export function AppShell({ children, viewer }: { children: React.ReactNode; view
       <BottomSheet open={moreOpen} onClose={() => setMoreOpen(false)} title="بیشتر">
         <div className="more-grid">
           {hasPermission(viewer.role, "employees:view") && <Link href="/employees"><Users />کارکنان</Link>}
+          {hasPermission(viewer.role, "customers:view") && <Link href="/customers"><ContactRound />مشتریان</Link>}
           {hasPermission(viewer.role, "reports:review") && <Link href="/reports"><FileBarChart />گزارش‌ها</Link>}
           {hasPermission(viewer.role, "activity:view") && <Link href="/activity"><Activity />فعالیت‌ها</Link>}
           {canManageSettings && <Link href="/settings"><Settings />تنظیمات</Link>}

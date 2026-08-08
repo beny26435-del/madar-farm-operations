@@ -33,6 +33,20 @@ export type Database = {
         { id: string; employee_id: string; report_date: string; start_time: string | null; end_time: string | null; work_summary: string; issues: string | null; actions_taken: string | null; notes: string | null; status: "draft" | "submitted" | "approved" | "rejected" | "revision_requested"; submitted_at: string | null; deleted_at: string | null; created_at: string; updated_at: string },
         { employee_id: string; report_date: string; start_time?: string | null; end_time?: string | null; work_summary?: string; issues?: string | null; actions_taken?: string | null; notes?: string | null; status?: "draft" | "submitted" | "approved" | "rejected" | "revision_requested"; submitted_at?: string | null; deleted_at?: string | null }
       >;
+      daily_report_expenses: Table<
+        { id: string; daily_report_id: string; description: string; amount: number; invoice_path: string | null; invoice_original_name: string | null; invoice_mime_type: string | null; invoice_size_bytes: number | null; created_at: string },
+        { daily_report_id: string; description: string; amount: number; invoice_path?: string | null; invoice_original_name?: string | null; invoice_mime_type?: string | null; invoice_size_bytes?: number | null }
+      >;
+      customers: Table<
+        { id: string; full_name: string; phone: string | null; created_by: string; created_at: string; updated_at: string },
+        { full_name: string; phone?: string | null; created_by: string },
+        { full_name?: string; phone?: string | null }
+      >;
+      customer_repair_items: Table<
+        { id: string; customer_id: string; item_name: string; details: string | null; status: "received" | "delivered"; received_at: string; delivered_at: string | null; created_by: string; created_at: string; updated_at: string },
+        { customer_id: string; item_name: string; details?: string | null; status?: "received" | "delivered"; received_at?: string; delivered_at?: string | null; created_by: string },
+        { item_name?: string; details?: string | null; status?: "received" | "delivered"; delivered_at?: string | null }
+      >;
     };
     Views: Record<never, never>;
     Functions: Record<never, never>;

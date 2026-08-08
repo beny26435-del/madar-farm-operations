@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { CalendarDays, Clock3, Download, FileText, Filter, Plus, Search, UserRound, Wrench } from "lucide-react";
+import { CalendarDays, Clock3, Download, FileText, Filter, Plus, ReceiptText, Search, UserRound, Wrench } from "lucide-react";
 import { useState } from "react";
 import { BottomSheet, EmptyState, ErrorState, SelectField, StatusBadge } from "./ui";
 
@@ -15,6 +15,7 @@ export type DailyReportListItem = {
   work_summary: string;
   status: "draft" | "submitted" | "approved" | "rejected" | "revision_requested";
   submitted_at: string | null;
+  expenses?: Array<{ id: string; description: string; amount: number; invoiceUrl: string | null }>;
 };
 
 const statusLabels = { draft: "پیش‌نویس", submitted: "ثبت‌شده", approved: "تأییدشده", rejected: "ردشده", revision_requested: "نیاز به اصلاح" } as const;
@@ -61,6 +62,7 @@ export function ReportListView({ type, reports = [], loadError = false }: { type
           {loadError ? <ErrorState /> : !maintenance && visibleReports.length > 0 ? <div className="real-report-list">{visibleReports.map((report) => <article key={report.id} className="real-report-card">
             <div className="real-report-card-head"><div className="report-person"><span className="list-avatar"><UserRound /></span><div><strong>{report.employeeName}</strong><small>{formatPersianDate(report.report_date)}</small></div></div><StatusBadge tone={statusTones[report.status]}>{statusLabels[report.status]}</StatusBadge></div>
             <p className="real-report-summary">{report.work_summary}</p>
+            {report.expenses && report.expenses.length > 0 && <div className="report-expenses"><header><span><ReceiptText /> مخارج</span><strong>{report.expenses.reduce((sum, expense) => sum + expense.amount, 0).toLocaleString("fa-IR")} تومان</strong></header>{report.expenses.map((expense) => <div className="report-expense-item" key={expense.id}><span>{expense.description}</span><strong>{expense.amount.toLocaleString("fa-IR")} تومان</strong>{expense.invoiceUrl && <a href={expense.invoiceUrl} target="_blank" rel="noreferrer">فاکتور</a>}</div>)}</div>}
             <div className="real-report-card-foot"><span><Clock3 /> ساعت کار</span><strong>{formatTime(report.start_time)} تا {formatTime(report.end_time)}</strong></div>
           </article>)}</div> : <EmptyState
             title={query ? "گزارشی پیدا نشد" : "هنوز گزارشی ثبت نشده است"}

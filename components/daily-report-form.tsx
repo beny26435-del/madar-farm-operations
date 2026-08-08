@@ -1,11 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowLeft, ArrowRight, CalendarDays, Check, CheckCircle2, ChevronLeft, ChevronRight, Clock3, FileText, ShieldCheck, UserRound, Wrench } from "lucide-react";
+import { ArrowLeft, ArrowRight, CalendarDays, Check, CheckCircle2, ChevronLeft, ChevronRight, Clock3, FileText, ImagePlus, Plus, ReceiptText, ShieldCheck, Trash2, UserRound } from "lucide-react";
 import { useState } from "react";
 import { gregorianToJalali, isValidTime, jalaliToGregorian, normalizeTime, parseJalaliDate } from "@/lib/date/jalali";
 
-const steps = ["زمان و تاریخ", "شرح فعالیت", "توضیحات تکمیلی"];
+const steps = ["زمان و تاریخ", "شرح فعالیت", "مخارج"];
 const faNumber = (value: number | string) => String(value).replace(/\d/g, (digit) => "۰۱۲۳۴۵۶۷۸۹"[Number(digit)]);
 const jalaliMonths = ["فروردین", "اردیبهشت", "خرداد", "تیر", "مرداد", "شهریور", "مهر", "آبان", "آذر", "دی", "بهمن", "اسفند"];
 const weekDays = ["ش", "ی", "د", "س", "چ", "پ", "ج"];
@@ -17,18 +17,22 @@ type FormState = {
   startTime: string;
   endTime: string;
   workSummary: string;
-  issues: string;
-  actionsTaken: string;
-  notes: string;
 };
 
-const emptyForm: FormState = { year: "", month: "", day: "", startTime: "", endTime: "", workSummary: "", issues: "", actionsTaken: "", notes: "" };
+type ExpenseItem = { id: string; description: string; amount: string; invoice: File | null };
+
+const emptyForm: FormState = { year: "", month: "", day: "", startTime: "", endTime: "", workSummary: "" };
+
+function normalizeAmount(value: string) {
+  return value.replace(/[۰-۹]/g, (digit) => String("۰۱۲۳۴۵۶۷۸۹".indexOf(digit))).replace(/[^\d]/g, "").slice(0, 12);
+}
 
 export function DailyReportForm({ displayName }: { displayName: string }) {
   const today = new Date();
   const currentJalali = gregorianToJalali(today.getFullYear(), today.getMonth() + 1, today.getDate());
   const [step, setStep] = useState(0);
   const [form, setForm] = useState<FormState>(emptyForm);
+  const [expenses, setExpenses] = useState<ExpenseItem[]>([]);
   const [datePickerOpen, setDatePickerOpen] = useState(false);
   const [viewYear, setViewYear] = useState(currentJalali.year);
   const [viewMonth, setViewMonth] = useState(currentJalali.month);
@@ -61,6 +65,22 @@ export function DailyReportForm({ displayName }: { displayName: string }) {
     setDatePickerOpen(false);
   }
 
+  function addExpense() {
+    if (expenses.length >= 10) return;
+    setExpenses((current) => [...current, { id: crypto.randomUUID(), description: "", amount: "", invoice: null }]);
+    setError(null);
+  }
+
+  function updateExpense(id: string, values: Partial<Omit<ExpenseItem, "id">>) {
+    setExpenses((current) => current.map((expense) => expense.id === id ? { ...expense, ...values } : expense));
+    setError(null);
+  }
+
+  function removeExpense(id: string) {
+    setExpenses((current) => current.filter((expense) => expense.id !== id));
+    setError(null);
+  }
+
   const firstGregorian = jalaliToGregorian(viewYear, viewMonth, 1);
   const firstWeekDay = (new Date(firstGregorian.year, firstGregorian.month - 1, firstGregorian.day).getDay() + 1) % 7;
   const monthLength = viewMonth <= 6 ? 31 : viewMonth <= 11 ? 30 : parseJalaliDate(String(viewYear), "12", "30") ? 30 : 29;
@@ -73,6 +93,7 @@ export function DailyReportForm({ displayName }: { displayName: string }) {
       if (!isValidTime(form.startTime) || !isValidTime(form.endTime)) return "ساعت ورود و خروج را کامل وارد کنید.";
     }
     if (step === 1 && form.workSummary.trim().length < 2) return "شرح فعالیت‌های انجام‌شده را وارد کنید.";
+    if (step === 2 && expenses.some((expense) => expense.description.trim().length < 2 || Number(expense.amount) <= 0)) return "شرح و مبلغ همه مخارج اضافه‌شده را کامل کنید.";
     return null;
   }
 
@@ -91,10 +112,13 @@ export function DailyReportForm({ displayName }: { displayName: string }) {
     setIsSubmitting(true);
     setError(null);
     try {
+      const payload = new FormData();
+      payload.append("report", JSON.stringify(form));
+      payload.append("expenses", JSON.stringify(expenses.map((expense) => ({ description: expense.description, amount: expense.amount }))));
+      expenses.forEach((expense, index) => { if (expense.invoice) payload.append(`invoice-${index}`, expense.invoice); });
       const response = await fetch("/api/daily-reports", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form),
+        body: payload,
       });
       const result = await response.json().catch(() => ({ message: "پاسخ سرور معتبر نیست." })) as { message?: string };
       if (!response.ok) {
@@ -111,7 +135,7 @@ export function DailyReportForm({ displayName }: { displayName: string }) {
   }
 
   if (completed) {
-    return <div className="app-page wizard-page"><div className="completion-card surface"><span><Check /></span><strong>گزارش ثبت شد</strong><p>گزارش در سامانه ذخیره شد و اکنون در فهرست گزارش‌های روزانه قابل مشاهده است.</p><div><Link className="button button-primary" href="/daily-reports">مشاهده گزارش‌ها</Link><button className="button button-secondary" onClick={() => { setForm(emptyForm); setStep(0); setCompleted(false); }}>ثبت گزارش جدید</button></div></div></div>;
+    return <div className="app-page wizard-page"><div className="completion-card surface"><span><Check /></span><strong>گزارش ثبت شد</strong><p>گزارش و مخارج آن در سامانه ذخیره شد و اکنون در فهرست گزارش‌های روزانه قابل مشاهده است.</p><div><Link className="button button-primary" href="/daily-reports">مشاهده گزارش‌ها</Link><button className="button button-secondary" onClick={() => { setForm(emptyForm); setExpenses([]); setStep(0); setCompleted(false); }}>ثبت گزارش جدید</button></div></div></div>;
   }
 
   return (
@@ -155,10 +179,15 @@ export function DailyReportForm({ displayName }: { displayName: string }) {
               </>}
 
               {step === 2 && <>
-                <div className="form-intro-icon"><Wrench /></div>
-                <label className="field"><span className="field-label">مشکلات مشاهده‌شده <span className="field-hint">اختیاری</span></span><textarea className="textarea" autoComplete="off" value={form.issues} onChange={(event) => update("issues", event.target.value)} /></label>
-                <label className="field"><span className="field-label">اقدامات انجام‌شده <span className="field-hint">اختیاری</span></span><textarea className="textarea" autoComplete="off" value={form.actionsTaken} onChange={(event) => update("actionsTaken", event.target.value)} /></label>
-                <label className="field"><span className="field-label">توضیحات تکمیلی <span className="field-hint">اختیاری</span></span><textarea className="textarea" autoComplete="off" value={form.notes} onChange={(event) => update("notes", event.target.value)} /></label>
+                <div className="expense-step-head"><div><span><ReceiptText /></span><div><strong>مخارج این روز</strong><p>پر کردن این بخش اختیاری است.</p></div></div><button type="button" className="button button-secondary" onClick={addExpense} disabled={expenses.length >= 10}><Plus /> افزودن هزینه</button></div>
+                {expenses.length === 0 ? <div className="expense-empty"><ReceiptText /><strong>هزینه‌ای اضافه نشده است</strong><p>در صورت داشتن مخارج، یک ردیف هزینه اضافه کنید.</p><button type="button" onClick={addExpense}><Plus /> افزودن هزینه</button></div> : <div className="expense-list">{expenses.map((expense, index) => <article className="expense-item" key={expense.id}>
+                  <header><div><span>{faNumber(index + 1)}</span><strong>هزینه</strong></div><button type="button" onClick={() => removeExpense(expense.id)} aria-label="حذف هزینه"><Trash2 /></button></header>
+                  <div className="expense-fields">
+                    <label className="field expense-description"><span className="field-label">برای چه موردی هزینه شده؟</span><input className="input" autoComplete="off" value={expense.description} onChange={(event) => updateExpense(expense.id, { description: event.target.value })} /></label>
+                    <label className="field expense-amount"><span className="field-label">مبلغ</span><span className="money-input-wrap"><input className="input" inputMode="numeric" autoComplete="off" dir="ltr" value={expense.amount} onChange={(event) => updateExpense(expense.id, { amount: normalizeAmount(event.target.value) })} /><i>تومان</i></span>{expense.amount && <small>{Number(expense.amount).toLocaleString("fa-IR")} تومان</small>}</label>
+                  </div>
+                  <div className="invoice-row"><label className={`invoice-upload ${expense.invoice ? "has-file" : ""}`}><input type="file" accept="image/jpeg,image/png,image/webp,image/heic,image/heif" onChange={(event) => updateExpense(expense.id, { invoice: event.target.files?.[0] ?? null })} /><ImagePlus /><span><strong>{expense.invoice ? expense.invoice.name : "افزودن تصویر فاکتور"}</strong><small>{expense.invoice ? "تصویر برای بارگذاری آماده است" : "حداکثر حجم ۸ مگابایت"}</small></span></label>{expense.invoice && <button type="button" className="remove-invoice" onClick={() => updateExpense(expense.id, { invoice: null })}>حذف تصویر</button>}</div>
+                </article>)}</div>}
               </>}
 
               {error && <p className="report-form-error" role="alert">{error}</p>}
