@@ -15,6 +15,9 @@ const actionCopy: Record<string, { verb: string; category: Exclude<Category, "al
   "customer.created": { verb: "پرونده مشتری ساخت", category: "customers", tone: "purple" },
   "repair_item.received": { verb: "یک مورد برای تعمیر تحویل گرفت", category: "customers", tone: "amber" },
   "repair_item.delivered": { verb: "مورد تعمیرشده را تحویل داد", category: "customers", tone: "green" },
+  "repair_item.delivery_requested": { verb: "لینک تأیید تحویل ساخت", category: "customers", tone: "amber" },
+  "customer_confirmation.intake": { verb: "تحویل وسیله به تعمیرگاه را تأیید کرد", category: "customers", tone: "green" },
+  "customer_confirmation.delivery": { verb: "تحویل گرفتن وسیله را تأیید کرد", category: "customers", tone: "green" },
   "employee.created": { verb: "حساب کارمند ساخت", category: "employees", tone: "purple" },
 };
 
@@ -33,7 +36,7 @@ function detailFor(item: ActivityItem) {
   if (item.action === "daily_report.submitted") return item.metadata.summary;
   if (item.action.startsWith("report.")) return item.metadata.title || item.metadata.comment;
   if (item.action === "customer.created") return item.metadata.customer_name;
-  if (item.action.startsWith("repair_item.")) return [item.metadata.item_name, item.metadata.customer_name].filter(Boolean).join(" · ");
+  if (item.action.startsWith("repair_item.") || item.action.startsWith("customer_confirmation.")) return [item.metadata.item_name, item.metadata.customer_name].filter(Boolean).join(" · ");
   if (item.action === "employee.created") return item.metadata.employee_name;
   return "";
 }

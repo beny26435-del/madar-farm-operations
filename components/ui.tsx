@@ -43,7 +43,7 @@ export function ErrorState() {
   );
 }
 
-export function Dialog({ open, onClose, title, description, children }: { open: boolean; onClose: () => void; title: string; description?: string; children?: React.ReactNode }) {
+export function Dialog({ open, onClose, title, description, mark, children }: { open: boolean; onClose: () => void; title: string; description?: string; mark?: React.ReactNode; children?: React.ReactNode }) {
   useEffect(() => {
     const close = (event: KeyboardEvent) => event.key === "Escape" && onClose();
     if (open) document.addEventListener("keydown", close);
@@ -54,7 +54,7 @@ export function Dialog({ open, onClose, title, description, children }: { open: 
     <div className="overlay" role="presentation" onMouseDown={(event) => event.currentTarget === event.target && onClose()}>
       <section className="dialog" role="dialog" aria-modal="true" aria-labelledby="dialog-title">
         <button className="dialog-close" onClick={onClose} aria-label="بستن"><X /></button>
-        <div className="dialog-mark"><AlertTriangle /></div>
+        <div className="dialog-mark">{mark ?? <AlertTriangle />}</div>
         <h2 id="dialog-title">{title}</h2>
         {description && <p>{description}</p>}
         {children}

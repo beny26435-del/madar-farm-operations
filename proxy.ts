@@ -4,6 +4,10 @@ import type { Database } from "@/types/database";
 
 const publicPaths = new Set(["/login"]);
 
+function isPublicPath(pathname: string) {
+  return publicPaths.has(pathname) || pathname.startsWith("/confirm/") || pathname.startsWith("/api/confirmations/");
+}
+
 function secure(response: NextResponse, request: NextRequest) {
   response.headers.set("Cache-Control", "private, no-store, max-age=0");
   response.headers.set("X-Content-Type-Options", "nosniff");
@@ -26,7 +30,7 @@ export async function proxy(request: NextRequest) {
   const url = request.nextUrl.clone();
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const publishableKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
-  const isPublic = publicPaths.has(url.pathname);
+  const isPublic = isPublicPath(url.pathname);
 
   if (!supabaseUrl || !publishableKey) {
     if (isPublic) return secure(NextResponse.next({ request }), request);
@@ -56,7 +60,7 @@ export async function proxy(request: NextRequest) {
     return redirectWithCookies(url, response, request);
   }
 
-  if (signedIn && isPublic) {
+  if (signedIn && publicPaths.has(url.pathname)) {
     url.pathname = "/dashboard";
     url.search = "";
     return redirectWithCookies(url, response, request);

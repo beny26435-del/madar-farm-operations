@@ -628,6 +628,54 @@ button { cursor: pointer; }
 .repair-item-copy p { margin: 0; color: #68766e; font-size: 9px; line-height: 1.8; }
 .repair-item-dates { display: flex; flex-wrap: wrap; gap: 10px; color: #8b958f; font-size: 8px; }
 .repair-deliver-button { min-width: 125px; }
+.repair-item-actions { min-width: 170px; display: grid; gap: 7px; }
+.repair-item-actions .button { min-height: 38px; padding-inline: 10px; font-size: 9px; }
+.repair-confirmation-status { display: flex; flex-wrap: wrap; gap: 6px; }
+.repair-confirmation-status > span { min-height: 25px; padding: 0 8px; border-radius: 7px; display: inline-flex; align-items: center; gap: 5px; font-size: 8px; }
+.repair-confirmation-status svg { width: 12px; }
+.repair-confirmation-status .confirmed { color: #347144; background: #eaf6ee; }
+.repair-confirmation-status .waiting { color: #8b681d; background: #fff5e2; }
+.confirmation-share-box { margin-top: 17px; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; text-align: right; }
+.confirmation-share-box > div { grid-column: 1 / -1; padding: 12px; overflow: hidden; border: 1px solid var(--border); border-radius: 10px; color: #5e6d63; background: #f7f9f7; text-overflow: ellipsis; white-space: nowrap; font: 10px ui-monospace, SFMono-Regular, Menlo, monospace; }
+
+/* Public customer confirmation */
+.confirmation-public-page { min-height: 100svh; padding: 28px 16px; background: radial-gradient(circle at 20% 0%,rgba(191,218,120,.18),transparent 32%),#edf1ed; display: grid; place-items: center; }
+.confirmation-public-card { width: min(100%,570px); overflow: hidden; border: 1px solid #dce3dd; border-radius: 23px; background: #fff; box-shadow: 0 28px 80px rgba(23,35,29,.13); }
+.confirmation-public-card > header { min-height: 78px; padding: 16px 20px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.confirmation-brand { display: flex; align-items: center; gap: 10px; }
+.confirmation-brand > span { width: 38px; height: 38px; border-radius: 11px; color: var(--accent); background: var(--primary); display: grid; place-items: center; }
+.confirmation-brand svg { width: 18px; }
+.confirmation-brand > div { display: grid; gap: 2px; }
+.confirmation-brand strong { font-size: 14px; }
+.confirmation-brand small { color: var(--subtle-foreground); font-size: 9px; }
+.confirmation-kind { min-height: 31px; padding: 0 9px; border-radius: 8px; color: #56705f; background: #edf3ed; display: flex; align-items: center; gap: 6px; font-size: 9px; font-weight: 700; }
+.confirmation-kind svg { width: 14px; }
+.confirmation-copy { padding: 27px 26px 18px; }
+.confirmation-copy small { color: #617a54; font-size: 10px; font-weight: 700; }
+.confirmation-copy h1 { margin: 7px 0 8px; font-size: 22px; line-height: 1.55; letter-spacing: -.035em; }
+.confirmation-copy p { margin: 0; color: var(--muted-foreground); font-size: 11px; line-height: 1.9; }
+.confirmation-item { margin: 0 26px; padding: 15px; border: 1px solid #dfe5e0; border-radius: 14px; background: #f8faf8; display: flex; align-items: flex-start; gap: 12px; }
+.confirmation-item > span { width: 43px; height: 43px; flex: 0 0 auto; border-radius: 12px; color: #5a7061; background: #e7ede8; display: grid; place-items: center; }
+.confirmation-item > span svg { width: 20px; }
+.confirmation-item > div { display: grid; gap: 3px; }
+.confirmation-item small { color: #8a958e; font-size: 8px; }
+.confirmation-item strong { font-size: 13px; }
+.confirmation-item p { margin: 3px 0 0; color: #68766e; font-size: 10px; line-height: 1.8; }
+.confirmation-meta { margin: 13px 26px 0; padding: 11px 2px; border-bottom: 1px solid #edf0ed; display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.confirmation-meta span { color: var(--subtle-foreground); font-size: 9px; }
+.confirmation-meta strong { color: #526057; font-size: 9px; }
+.confirmation-error { margin: 13px 26px 0; padding: 10px 12px; border-radius: 9px; color: #923d35; background: #fff1ef; font-size: 10px; }
+.confirmation-submit { width: calc(100% - 52px); min-height: 52px; margin: 20px 26px 0; }
+.confirmation-note { margin: 14px 26px 24px; color: #7f8b83; display: flex; align-items: center; justify-content: center; gap: 6px; font-size: 8px; text-align: center; }
+.confirmation-note svg { width: 13px; }
+.confirmation-success { min-height: 400px; padding: 55px 28px; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
+.confirmation-success > span, .confirmation-public-card.invalid > span { width: 66px; height: 66px; border-radius: 20px; color: var(--success); background: var(--success-soft); display: grid; place-items: center; }
+.confirmation-success svg, .confirmation-public-card.invalid svg { width: 30px; }
+.confirmation-success h1, .confirmation-public-card.invalid h1 { margin: 18px 0 7px; font-size: 22px; }
+.confirmation-success p, .confirmation-public-card.invalid p { margin: 0; color: var(--muted-foreground); font-size: 11px; line-height: 1.9; }
+.confirmation-success time { margin-top: 12px; color: #8a958e; font-size: 9px; }
+.confirmation-public-card.invalid { min-height: 360px; padding: 45px 30px; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
+.confirmation-public-card.invalid > span { color: var(--warning); background: var(--warning-soft); }
 
 /* Report review and activity */
 .review-summary, .activity-summary { margin-bottom: 14px; display: grid; gap: 10px; }
@@ -988,6 +1036,17 @@ button { cursor: pointer; }
   .customer-detail-layout { grid-template-columns: 1fr; }
   .repair-item-card { grid-template-columns: auto minmax(0,1fr); }
   .repair-deliver-button { grid-column: 1 / -1; width: 100%; }
+  .repair-item-actions { grid-column: 1 / -1; width: 100%; }
+  .repair-item-actions .button { width: 100%; }
+  .confirmation-share-box { grid-template-columns: 1fr; }
+  .confirmation-share-box > div { grid-column: auto; }
+  .confirmation-public-page { padding: 0; display: block; background: #fff; }
+  .confirmation-public-card { min-height: 100svh; border: 0; border-radius: 0; box-shadow: none; }
+  .confirmation-public-card > header { padding-inline: 17px; }
+  .confirmation-copy { padding-inline: 19px; }
+  .confirmation-copy h1 { font-size: 20px; }
+  .confirmation-item, .confirmation-meta { margin-inline: 19px; }
+  .confirmation-submit { width: calc(100% - 38px); margin-inline: 19px; }
   .review-summary { grid-template-columns: repeat(2,1fr); }
   .activity-summary { grid-template-columns: 1fr; }
   .review-toolbar, .activity-toolbar { align-items: stretch; flex-direction: column; }

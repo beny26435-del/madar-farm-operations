@@ -8,7 +8,7 @@ const read = (path) => readFile(new URL(path, root), "utf8");
 
 test("خروجی Next.js همه مسیرهای اصلی را دارد", async () => {
   const manifest = JSON.parse(await read(".next/server/app-paths-manifest.json"));
-  for (const route of ["/login/page", "/dashboard/page", "/daily-reports/page", "/maintenance/page", "/employees/page", "/employees/new/page", "/customers/page", "/customers/new/page", "/customers/[id]/page", "/reports/page", "/activity/page", "/api/users/route", "/api/daily-reports/route", "/api/customers/route", "/api/customers/[id]/items/route", "/api/customers/[id]/items/[itemId]/route", "/api/reports/[type]/[id]/review/route"]) {
+  for (const route of ["/login/page", "/dashboard/page", "/daily-reports/page", "/maintenance/page", "/employees/page", "/employees/new/page", "/customers/page", "/customers/new/page", "/customers/[id]/page", "/reports/page", "/activity/page", "/confirm/[token]/page", "/api/users/route", "/api/daily-reports/route", "/api/customers/route", "/api/customers/[id]/items/route", "/api/customers/[id]/items/[itemId]/route", "/api/customers/[id]/items/[itemId]/confirmation/route", "/api/confirmations/[token]/route", "/api/reports/[type]/[id]/review/route"]) {
     assert.ok(manifest[route], `missing ${route}`);
   }
 });
@@ -108,13 +108,35 @@ test("پرونده مشتری، اقلام تعمیر و تحویل را با د
   const migration = await read("supabase/migrations/202608080005_customers_and_repair_items.sql");
   assert.match(listPage, /from\("customers"\)/);
   assert.match(listPage, /from\("customer_repair_items"\)/);
-  assert.match(detail, /تحویل داده شد/);
+  assert.match(detail, /تحویل داده‌شده/);
   assert.match(createCustomerApi, /from\("customers"\)\.insert/);
   assert.match(itemApi, /from\("customer_repair_items"\)\.insert/);
-  assert.match(deliveryApi, /status: "delivered"/);
+  assert.match(deliveryApi, /type: "delivery"/);
   assert.match(migration, /create table public\.customers/);
   assert.match(migration, /create table public\.customer_repair_items/);
   assert.match(migration, /alter table public\.customers enable row level security/);
+});
+
+test("مشتری دریافت و تحویل وسیله را با لینک امن و یک‌بارمصرف تأیید می‌کند", async () => {
+  const detailPage = await read("app/customers/[id]/page.tsx");
+  const detail = await read("components/customer-detail-view.tsx");
+  const publicPage = await read("app/confirm/[token]/page.tsx");
+  const publicApi = await read("app/api/confirmations/[token]/route.ts");
+  const token = await read("lib/customer-confirmations/token.ts");
+  const migration = await read("supabase/migrations/202608080007_customer_handover_confirmations.sql");
+  const proxy = await read("proxy.ts");
+  assert.match(detailPage, /from\("customer_handover_confirmations"\)/);
+  assert.match(detail, /لینک تأیید دریافت/);
+  assert.match(detail, /ساخت لینک تحویل/);
+  assert.match(publicPage, /hashCustomerConfirmationToken/);
+  assert.match(publicApi, /confirm_customer_handover/);
+  assert.match(token, /randomBytes\(32\)/);
+  assert.match(token, /createHash\("sha256"\)/);
+  assert.match(migration, /unique \(item_id, type\)/);
+  assert.match(migration, /security definer/);
+  assert.match(migration, /set status = 'delivered', delivered_at = confirmed_time/);
+  assert.match(migration, /revoke all on function public\.confirm_customer_handover/);
+  assert.match(proxy, /pathname\.startsWith\("\/confirm\/"\)/);
 });
 
 test("صف بررسی، تصمیم مدیر را در گزارش و تاریخچه ثبت می‌کند", async () => {

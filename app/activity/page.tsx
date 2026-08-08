@@ -18,10 +18,9 @@ export default async function ActivityPage() {
     supabase.from("profiles").select("id, display_name"),
   ]);
   const names = new Map((profiles ?? []).map((profile) => [profile.id, profile.display_name]));
-  const items: ActivityItem[] = (logs ?? []).map((log) => ({
-    ...log,
-    actorName: log.actor_id ? names.get(log.actor_id) ?? "کاربر سامانه" : "سامانه",
-    metadata: log.metadata && typeof log.metadata === "object" && !Array.isArray(log.metadata) ? Object.fromEntries(Object.entries(log.metadata).map(([key, value]) => [key, typeof value === "string" ? value : String(value ?? "")])) : {},
-  }));
+  const items: ActivityItem[] = (logs ?? []).map((log) => {
+    const metadata = log.metadata && typeof log.metadata === "object" && !Array.isArray(log.metadata) ? Object.fromEntries(Object.entries(log.metadata).map(([key, value]) => [key, typeof value === "string" ? value : String(value ?? "")])) : {};
+    return { ...log, actorName: log.actor_id ? names.get(log.actor_id) ?? "کاربر سامانه" : log.action.startsWith("customer_confirmation.") ? metadata.customer_name || "مشتری" : "سامانه", metadata };
+  });
   return <AppShell viewer={viewer}><ActivityView items={items} loadError={Boolean(error)} /></AppShell>;
 }
