@@ -45,6 +45,24 @@ test("گزارش روزانه واقعاً در Supabase ثبت می‌شود", 
   assert.doesNotMatch(form, /نام کارمند.*input/s);
 });
 
+test("تاریخ با تقویم شمسی و بدون ورودی تایپی انتخاب می‌شود", async () => {
+  const form = await read("components/daily-report-form.tsx");
+  assert.match(form, /jalali-picker-panel/);
+  assert.match(form, /role="dialog" aria-label="تقویم شمسی"/);
+  assert.match(form, /selectDate\(viewYear, viewMonth, day\)/);
+  assert.doesNotMatch(form, /aria-label="سال شمسی"|aria-label="ماه شمسی"|aria-label="روز شمسی"/);
+});
+
+test("داشبورد و فهرست از گزارش‌های واقعی استفاده می‌کنند", async () => {
+  const dashboardPage = await read("app/dashboard/page.tsx");
+  const dashboard = await read("components/dashboard-view.tsx");
+  const list = await read("components/report-list-view.tsx");
+  assert.match(dashboardPage, /from\("daily_reports"\)/);
+  assert.match(dashboard, /reviewQueue/);
+  assert.match(dashboard, /dashboard-week-bars/);
+  assert.match(list, /real-report-card/);
+});
+
 test("داشبورد و فهرست گزارش فاقد رکورد ثابت هستند", async () => {
   const dashboard = await read("components/dashboard-view.tsx");
   const reports = await read("components/report-list-view.tsx");

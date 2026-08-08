@@ -58,10 +58,10 @@ export function ReportListView({ type, reports = [], loadError = false }: { type
             <label className="report-search"><Search /><input value={query} onChange={(event) => setQuery(event.target.value)} autoComplete="off" placeholder={maintenance ? "جست‌وجوی گزارش تعمیرات" : "جست‌وجوی گزارش روزانه"} /></label>
             <button className="button button-secondary mobile-filter-button" onClick={() => setFilterOpen(true)}><Filter /> فیلترها</button>
           </div>
-          {loadError ? <ErrorState /> : !maintenance && visibleReports.length > 0 ? <div className="real-report-list">{visibleReports.map((report) => <article key={report.id}>
-            <span className="list-avatar"><UserRound /></span>
-            <div className="real-report-main"><div><strong>{report.employeeName}</strong><small>{formatPersianDate(report.report_date)}</small></div><p>{report.work_summary}</p><span><Clock3 /> {formatTime(report.start_time)} تا {formatTime(report.end_time)}</span></div>
-            <StatusBadge tone={statusTones[report.status]}>{statusLabels[report.status]}</StatusBadge>
+          {loadError ? <ErrorState /> : !maintenance && visibleReports.length > 0 ? <div className="real-report-list">{visibleReports.map((report) => <article key={report.id} className="real-report-card">
+            <div className="real-report-card-head"><div className="report-person"><span className="list-avatar"><UserRound /></span><div><strong>{report.employeeName}</strong><small>{formatPersianDate(report.report_date)}</small></div></div><StatusBadge tone={statusTones[report.status]}>{statusLabels[report.status]}</StatusBadge></div>
+            <p className="real-report-summary">{report.work_summary}</p>
+            <div className="real-report-card-foot"><span><Clock3 /> ساعت کار</span><strong>{formatTime(report.start_time)} تا {formatTime(report.end_time)}</strong></div>
           </article>)}</div> : <EmptyState
             title={query ? "گزارشی پیدا نشد" : "هنوز گزارشی ثبت نشده است"}
             description={query ? "عبارت جست‌وجو را تغییر دهید." : "با ثبت نخستین گزارش، اطلاعات واقعی در این فهرست نمایش داده می‌شود."}
