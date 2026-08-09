@@ -28,7 +28,7 @@ const pageTitles: Record<string, string> = {
   "/daily-reports": "گزارش‌های روزانه",
   "/daily-reports/new": "ثبت گزارش روزانه",
   "/maintenance": "تعمیرات و سرویس",
-  "/maintenance/new": "ثبت گزارش تعمیرات",
+  "/maintenance/new": "ثبت تعمیرات",
   "/employees": "کارکنان",
   "/employees/new": "ساخت کاربر",
   "/customers": "مشتریان",

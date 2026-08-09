@@ -43,13 +43,17 @@ export type Database = {
         { full_name?: string; phone?: string | null }
       >;
       customer_repair_items: Table<
-        { id: string; customer_id: string; item_name: string; details: string | null; status: "received" | "delivered"; received_at: string; delivered_at: string | null; created_by: string; created_at: string; updated_at: string },
-        { customer_id: string; item_name: string; details?: string | null; status?: "received" | "delivered"; received_at?: string; delivered_at?: string | null; created_by: string },
-        { item_name?: string; details?: string | null; status?: "received" | "delivered"; delivered_at?: string | null }
+        { id: string; customer_id: string; intake_id: string | null; item_name: string; quantity: number; details: string | null; status: "received" | "delivered"; received_at: string; delivered_at: string | null; created_by: string; created_at: string; updated_at: string },
+        { customer_id: string; intake_id?: string | null; item_name: string; quantity?: number; details?: string | null; status?: "received" | "delivered"; received_at?: string; delivered_at?: string | null; created_by: string },
+        { intake_id?: string | null; item_name?: string; quantity?: number; details?: string | null; status?: "received" | "delivered"; delivered_at?: string | null }
+      >;
+      customer_repair_intakes: Table<
+        { id: string; customer_id: string; created_by: string; received_at: string; created_at: string },
+        { customer_id: string; created_by: string; received_at?: string; created_at?: string }
       >;
       customer_handover_confirmations: Table<
-        { id: string; item_id: string; type: "intake" | "delivery"; token_hash: string; expires_at: string; confirmed_at: string | null; created_by: string; created_at: string },
-        { item_id: string; type: "intake" | "delivery"; token_hash: string; expires_at: string; confirmed_at?: string | null; created_by: string; created_at?: string },
+        { id: string; item_id: string | null; intake_id: string | null; type: "intake" | "delivery"; token_hash: string; expires_at: string; confirmed_at: string | null; created_by: string; created_at: string },
+        { item_id?: string | null; intake_id?: string | null; type: "intake" | "delivery"; token_hash: string; expires_at: string; confirmed_at?: string | null; created_by: string; created_at?: string },
         { token_hash?: string; expires_at?: string; confirmed_at?: string | null; created_at?: string }
       >;
       maintenance_reports: Table<
@@ -69,7 +73,7 @@ export type Database = {
     Functions: {
       confirm_customer_handover: {
         Args: { p_token_hash: string };
-        Returns: Array<{ result: string; confirmation_type: "intake" | "delivery" | null; repair_item_id: string | null; customer_name: string | null; repair_item_name: string | null; confirmation_time: string | null }>;
+        Returns: Array<{ result: string; confirmation_type: "intake" | "delivery" | null; repair_item_id: string | null; repair_intake_id: string | null; customer_name: string | null; repair_item_name: string | null; confirmation_time: string | null }>;
       };
     };
     Enums: { app_role: AppRole; customer_confirmation_type: "intake" | "delivery" };

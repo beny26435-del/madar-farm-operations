@@ -10,10 +10,20 @@ export default async function ConfirmationPage({ params }: { params: Promise<{ t
   const { token } = await params;
   if (!isCustomerConfirmationToken(token)) return <CustomerConfirmationView token={token} confirmation={null} />;
   const admin = createAdminClient();
-  const { data: confirmation } = await admin.from("customer_handover_confirmations").select("item_id, type, expires_at, confirmed_at, created_at").eq("token_hash", hashCustomerConfirmationToken(token)).maybeSingle();
+  const { data: confirmation } = await admin.from("customer_handover_confirmations").select("item_id, intake_id, type, expires_at, confirmed_at, created_at").eq("token_hash", hashCustomerConfirmationToken(token)).maybeSingle();
   if (!confirmation) return <CustomerConfirmationView token={token} confirmation={null} />;
-  const { data: item } = await admin.from("customer_repair_items").select("id, customer_id, item_name, details, received_at, delivered_at").eq("id", confirmation.item_id).maybeSingle();
+  if (confirmation.intake_id) {
+    const [{ data: intake }, { data: items }] = await Promise.all([
+      admin.from("customer_repair_intakes").select("customer_id, received_at").eq("id", confirmation.intake_id).maybeSingle(),
+      admin.from("customer_repair_items").select("item_name, quantity").eq("intake_id", confirmation.intake_id).order("created_at"),
+    ]);
+    if (!intake || !items?.length) return <CustomerConfirmationView token={token} confirmation={null} />;
+    const { data: customer } = await admin.from("customers").select("full_name").eq("id", intake.customer_id).maybeSingle();
+    return <CustomerConfirmationView token={token} confirmation={{ type: confirmation.type, expiresAt: confirmation.expires_at, confirmedAt: confirmation.confirmed_at, requestedAt: confirmation.created_at, expired: !confirmation.confirmed_at && isCustomerConfirmationExpired(confirmation.expires_at), customerName: customer?.full_name ?? "مشتری", items: items.map((item) => ({ name: item.item_name, quantity: item.quantity })), receivedAt: intake.received_at }} />;
+  }
+  if (!confirmation.item_id) return <CustomerConfirmationView token={token} confirmation={null} />;
+  const { data: item } = await admin.from("customer_repair_items").select("customer_id, item_name, quantity, received_at").eq("id", confirmation.item_id).maybeSingle();
   if (!item) return <CustomerConfirmationView token={token} confirmation={null} />;
   const { data: customer } = await admin.from("customers").select("full_name").eq("id", item.customer_id).maybeSingle();
-  return <CustomerConfirmationView token={token} confirmation={{ type: confirmation.type, expiresAt: confirmation.expires_at, confirmedAt: confirmation.confirmed_at, requestedAt: confirmation.created_at, expired: !confirmation.confirmed_at && isCustomerConfirmationExpired(confirmation.expires_at), customerName: customer?.full_name ?? "مشتری", itemName: item.item_name, details: item.details, receivedAt: item.received_at, deliveredAt: item.delivered_at }} />;
+  return <CustomerConfirmationView token={token} confirmation={{ type: confirmation.type, expiresAt: confirmation.expires_at, confirmedAt: confirmation.confirmed_at, requestedAt: confirmation.created_at, expired: !confirmation.confirmed_at && isCustomerConfirmationExpired(confirmation.expires_at), customerName: customer?.full_name ?? "مشتری", items: [{ name: item.item_name, quantity: item.quantity }], receivedAt: item.received_at }} />;
 }

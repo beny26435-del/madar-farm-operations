@@ -16,12 +16,14 @@ export default async function CustomerPage({ params }: { params: Promise<{ id: s
   const supabase = await createClient();
   const [{ data: customer }, { data: items, error }] = await Promise.all([
     supabase.from("customers").select("id, full_name, phone, created_at").eq("id", id).maybeSingle(),
-    supabase.from("customer_repair_items").select("id, customer_id, item_name, details, status, received_at, delivered_at").eq("customer_id", id).order("received_at", { ascending: false }),
+    supabase.from("customer_repair_items").select("id, customer_id, intake_id, item_name, quantity, status, received_at, delivered_at").eq("customer_id", id).order("received_at", { ascending: false }),
   ]);
   if (!customer) notFound();
   const itemIds = (items ?? []).map((item) => item.id);
-  const { data: confirmations, error: confirmationError } = itemIds.length > 0
-    ? await supabase.from("customer_handover_confirmations").select("id, item_id, type, expires_at, confirmed_at").in("item_id", itemIds)
-    : { data: [], error: null };
-  return <AppShell viewer={viewer}><CustomerDetailView customer={customer} items={items ?? []} confirmations={confirmations ?? []} loadError={Boolean(error || confirmationError)} /></AppShell>;
+  const intakeIds = [...new Set((items ?? []).flatMap((item) => item.intake_id ? [item.intake_id] : []))];
+  const [itemConfirmations, intakeConfirmations] = await Promise.all([
+    itemIds.length ? supabase.from("customer_handover_confirmations").select("id, item_id, intake_id, type, expires_at, confirmed_at").in("item_id", itemIds) : Promise.resolve({ data: [], error: null }),
+    intakeIds.length ? supabase.from("customer_handover_confirmations").select("id, item_id, intake_id, type, expires_at, confirmed_at").in("intake_id", intakeIds) : Promise.resolve({ data: [], error: null }),
+  ]);
+  return <AppShell viewer={viewer}><CustomerDetailView customer={customer} items={items ?? []} confirmations={[...(itemConfirmations.data ?? []), ...(intakeConfirmations.data ?? [])]} loadError={Boolean(error || itemConfirmations.error || intakeConfirmations.error)} /></AppShell>;
 }

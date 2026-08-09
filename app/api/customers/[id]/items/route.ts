@@ -7,7 +7,7 @@ import { createClient } from "@/lib/supabase/server";
 
 const itemSchema = z.object({
   itemName: z.string().trim().min(2).max(200),
-  details: z.string().trim().max(2000),
+  quantity: z.number().int().min(1).max(999),
 });
 
 export async function POST(request: Request, context: { params: Promise<{ id: string }> }) {
@@ -24,7 +24,7 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
   const admin = createAdminClient();
   const { data: customer } = await admin.from("customers").select("id, full_name").eq("id", customerId).maybeSingle();
   if (!customer) return NextResponse.json({ message: "مشتری پیدا نشد." }, { status: 404 });
-  const { data: item, error } = await admin.from("customer_repair_items").insert({ customer_id: customerId, item_name: parsed.data.itemName, details: parsed.data.details || null, created_by: actorId }).select("id").single();
+  const { data: item, error } = await admin.from("customer_repair_items").insert({ customer_id: customerId, item_name: parsed.data.itemName, quantity: parsed.data.quantity, details: null, created_by: actorId }).select("id").single();
   if (error) return NextResponse.json({ message: "ثبت وسیله انجام نشد." }, { status: 500 });
   let confirmationUrl: string | null = null;
   try {
@@ -33,6 +33,6 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
   } catch {
     // The repair item remains safely registered if link generation is temporarily unavailable.
   }
-  await recordActivity({ actorId, action: "repair_item.received", entityType: "repair_item", entityId: item.id, metadata: { item_name: parsed.data.itemName, customer_name: customer.full_name } });
+  await recordActivity({ actorId, action: "repair_item.received", entityType: "repair_item", entityId: item.id, metadata: { item_name: parsed.data.itemName, quantity: parsed.data.quantity, customer_name: customer.full_name } });
   return NextResponse.json({ id: item.id, confirmationUrl, message: confirmationUrl ? "وسیله ثبت شد. لینک تأیید مشتری آماده است." : "وسیله ثبت شد؛ ساخت لینک تأیید را دوباره انجام دهید." }, { status: 201 });
 }

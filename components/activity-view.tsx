@@ -13,6 +13,7 @@ const actionCopy: Record<string, { verb: string; category: Exclude<Category, "al
   "report.rejected": { verb: "گزارش را رد کرد", category: "reports", tone: "red" },
   "report.revision_requested": { verb: "برای گزارش درخواست اصلاح ثبت کرد", category: "reports", tone: "amber" },
   "customer.created": { verb: "پرونده مشتری ساخت", category: "customers", tone: "purple" },
+  "repair_intake.created": { verb: "تعمیرات مشتری را ثبت کرد", category: "customers", tone: "amber" },
   "repair_item.received": { verb: "یک مورد برای تعمیر تحویل گرفت", category: "customers", tone: "amber" },
   "repair_item.delivered": { verb: "مورد تعمیرشده را تحویل داد", category: "customers", tone: "green" },
   "repair_item.delivery_requested": { verb: "لینک تأیید تحویل ساخت", category: "customers", tone: "amber" },
@@ -26,7 +27,7 @@ function actionIcon(action: string) {
   if (action === "report.rejected") return <XCircle />;
   if (action === "report.revision_requested") return <RefreshCcw />;
   if (action === "customer.created") return <ContactRound />;
-  if (action === "repair_item.received") return <Wrench />;
+  if (action === "repair_item.received" || action === "repair_intake.created") return <Wrench />;
   if (action === "repair_item.delivered") return <PackageCheck />;
   if (action === "employee.created") return <UserPlus />;
   return <FileText />;
@@ -36,6 +37,7 @@ function detailFor(item: ActivityItem) {
   if (item.action === "daily_report.submitted") return item.metadata.summary;
   if (item.action.startsWith("report.")) return item.metadata.title || item.metadata.comment;
   if (item.action === "customer.created") return item.metadata.customer_name;
+  if (item.action === "repair_intake.created") return [item.metadata.customer_name, item.metadata.total_quantity ? `${item.metadata.total_quantity} وسیله` : ""].filter(Boolean).join(" · ");
   if (item.action.startsWith("repair_item.") || item.action.startsWith("customer_confirmation.")) return [item.metadata.item_name, item.metadata.customer_name].filter(Boolean).join(" · ");
   if (item.action === "employee.created") return item.metadata.employee_name;
   return "";

@@ -8,13 +8,13 @@ const read = (path) => readFile(new URL(path, root), "utf8");
 
 test("خروجی Next.js همه مسیرهای اصلی را دارد", async () => {
   const manifest = JSON.parse(await read(".next/server/app-paths-manifest.json"));
-  for (const route of ["/login/page", "/dashboard/page", "/daily-reports/page", "/maintenance/page", "/employees/page", "/employees/new/page", "/customers/page", "/customers/new/page", "/customers/[id]/page", "/reports/page", "/activity/page", "/confirm/[token]/page", "/api/users/route", "/api/daily-reports/route", "/api/customers/route", "/api/customers/[id]/items/route", "/api/customers/[id]/items/[itemId]/route", "/api/customers/[id]/items/[itemId]/confirmation/route", "/api/confirmations/[token]/route", "/api/reports/[type]/[id]/review/route"]) {
+  for (const route of ["/login/page", "/dashboard/page", "/daily-reports/page", "/maintenance/page", "/maintenance/new/page", "/employees/page", "/employees/new/page", "/customers/page", "/customers/new/page", "/customers/[id]/page", "/reports/page", "/activity/page", "/confirm/[token]/page", "/api/users/route", "/api/daily-reports/route", "/api/maintenance-intakes/route", "/api/customers/route", "/api/customers/[id]/items/route", "/api/customers/[id]/items/[itemId]/route", "/api/customers/[id]/items/[itemId]/confirmation/route", "/api/confirmations/[token]/route", "/api/reports/[type]/[id]/review/route"]) {
     assert.ok(manifest[route], `missing ${route}`);
   }
 });
 
 test("فرم‌ها هیچ مقدار اولیه‌ای ندارند", async () => {
-  const source = `${await read("components/login-view.tsx")}\n${await read("components/report-wizard.tsx")}\n${await read("components/daily-report-form.tsx")}\n${await read("components/employee-create-form.tsx")}`;
+  const source = `${await read("components/login-view.tsx")}\n${await read("components/report-wizard.tsx")}\n${await read("components/daily-report-form.tsx")}\n${await read("components/employee-create-form.tsx")}\n${await read("components/maintenance-intake-form.tsx")}`;
   assert.doesNotMatch(source, /defaultValue=/);
   assert.doesNotMatch(source, /defaultValues:/);
   assert.match(source, /autoComplete="off"/);
@@ -137,6 +137,25 @@ test("مشتری دریافت و تحویل وسیله را با لینک امن
   assert.match(migration, /set status = 'delivered', delivered_at = confirmed_time/);
   assert.match(migration, /revoke all on function public\.confirm_customer_handover/);
   assert.match(proxy, /pathname\.startsWith\("\/confirm\/"\)/);
+});
+
+test("ثبت تعمیرات فقط مشتری، وسیله و تعداد را در یک پذیرش واقعی ذخیره می‌کند", async () => {
+  const page = await read("app/maintenance/new/page.tsx");
+  const listPage = await read("app/maintenance/page.tsx");
+  const form = await read("components/maintenance-intake-form.tsx");
+  const api = await read("app/api/maintenance-intakes/route.ts");
+  const migration = await read("supabase/migrations/202608090008_repair_intakes_and_quantities.sql");
+  assert.match(page, /MaintenanceIntakeForm/);
+  assert.match(listPage, /from\("customer_repair_intakes"\)/);
+  assert.match(form, /مشتری جدید/);
+  assert.match(form, /نام وسیله/);
+  assert.match(form, /تعداد/);
+  assert.doesNotMatch(form, /اقدام انجام‌شده|شرح فنی|شرح وضعیت/);
+  assert.match(api, /from\("customer_repair_intakes"\)\.insert/);
+  assert.match(api, /from\("customer_repair_items"\)\.insert/);
+  assert.match(api, /intakeId: intake\.id/);
+  assert.match(migration, /create table public\.customer_repair_intakes/);
+  assert.match(migration, /add column quantity integer/);
 });
 
 test("صف بررسی، تصمیم مدیر را در گزارش و تاریخچه ثبت می‌کند", async () => {
