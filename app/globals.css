@@ -1,6 +1,7 @@
 @import "tailwindcss";
 
 :root {
+  --mineplus-style-release: 2026081802;
   --background: #f4f5f3;
   --surface: #ffffff;
   --surface-soft: #f8f9f7;
