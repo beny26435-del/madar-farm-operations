@@ -182,6 +182,14 @@ test("پروژه اندروید MinePlus امن و آماده Android Studio ا�
   assert.match(gradle, /isMinifyEnabled = true/);
 });
 
+test("API برای اپ بومی توکن Bearer امن را می‌پذیرد", async () => {
+  const serverClient = await read("lib/supabase/server.ts");
+  const proxy = await read("proxy.ts");
+  assert.match(serverClient, /authorization\?\.startsWith\("Bearer "\)/);
+  assert.match(serverClient, /global: \{ headers: \{ Authorization: authorization \} \}/);
+  assert.match(proxy, /\(\?!api\//);
+});
+
 test("در منوی موبایل، گزارش دکمه اصلی است و تعمیرات جای روزانه قرار دارد", async () => {
   const shell = await read("components/app-shell.tsx");
   assert.match(shell, /href="\/maintenance\/new" className=\{active\("\/maintenance"\)[\s\S]*?<span>تعمیرات<\/span>/);
@@ -361,4 +369,49 @@ test("migration قواعد هویتی و RLS را حفظ می‌کند", async (
   assert.match(sql, /alter table public\.profiles enable row level security/);
   assert.match(sql, /Report revisions are immutable/);
   assert.match(sql, /revoke all on all tables in schema public from anon/);
+});
+
+test("اپ اندروید MinePlus یک اپ کامل بومی است و WebView ندارد", async () => {
+  const appConfig = await read("mobile/app.config.ts");
+  const layout = await read("mobile/src/app/(tabs)/_layout.tsx");
+  const androidManifest = await read("mobile/android/app/src/main/AndroidManifest.xml");
+  const mainActivity = await read("mobile/android/app/src/main/java/app/mineplus/MainActivity.kt");
+  const packageJson = await read("mobile/package.json");
+  const source = `${appConfig}\n${layout}\n${androidManifest}\n${mainActivity}\n${packageJson}`;
+  assert.match(appConfig, /package: "app\.mineplus"/);
+  assert.match(packageJson, /"react-native": "0\.86\.2"/);
+  assert.match(layout, /name="maintenance"[\s\S]*name="report"/);
+  assert.match(layout, /title: "گزارش"/);
+  assert.doesNotMatch(source, /android\.webkit\.WebView|react-native-webview|<WebView/);
+});
+
+test("اپ بومی همه بخش‌های عملیاتی اصلی را دارد", async () => {
+  for (const path of [
+    "mobile/src/app/(tabs)/index.tsx",
+    "mobile/src/app/(tabs)/maintenance.tsx",
+    "mobile/src/app/(tabs)/report.tsx",
+    "mobile/src/app/(tabs)/history.tsx",
+    "mobile/src/app/tasks.tsx",
+    "mobile/src/app/customers.tsx",
+    "mobile/src/app/customer/[id].tsx",
+    "mobile/src/app/technicians.tsx",
+    "mobile/src/app/employees.tsx",
+    "mobile/src/app/review.tsx",
+    "mobile/src/app/activity.tsx",
+    "mobile/src/app/profile.tsx",
+  ]) assert.ok((await read(path)).length > 100, `native screen missing: ${path}`);
+});
+
+test("آپدیت داخل برنامه و Google Play هر دو پیکربندی شده‌اند", async () => {
+  const ota = await read("mobile/src/components/update-gate.tsx");
+  const config = await read("mobile/app.config.ts");
+  const gradle = await read("mobile/android/app/build.gradle");
+  const activity = await read("mobile/android/app/src/main/java/app/mineplus/MainActivity.kt");
+  assert.match(ota, /checkForUpdateAsync/);
+  assert.match(ota, /fetchUpdateAsync/);
+  assert.match(ota, /reloadAsync/);
+  assert.match(config, /runtimeVersion: \{ policy: "appVersion" \}/);
+  assert.match(gradle, /com\.google\.android\.play:app-update-ktx:2\.1\.0/);
+  assert.match(activity, /AppUpdateManagerFactory/);
+  assert.match(activity, /AppUpdateType\.IMMEDIATE/);
 });

@@ -1,0 +1,43 @@
+// The local network returns 404 for dl.google.com. This official Google
+// redirector is injected into the root build and every included Expo/RN build.
+def googleRedirector = uri("https://redirector.gvt1.com/edgedl/android/maven2")
+
+def addGoogleRedirector = { repositories ->
+    repositories.maven {
+        url = googleRedirector
+        content {
+            includeGroup "com.android"
+            includeGroupByRegex "androidx\\..*"
+            includeGroupByRegex "com\\.android\\..*"
+            includeGroupByRegex "com\\.google\\.android\\..*"
+            includeGroupByRegex "com\\.google\\.firebase\\..*"
+            includeGroupByRegex "com\\.google\\.gms\\..*"
+            includeGroup "com.google.prefab"
+            includeGroupByRegex "com\\.google\\.testing\\..*"
+        }
+    }
+}
+
+beforeSettings { settings ->
+    settings.pluginManagement.repositories {
+        addGoogleRedirector(delegate)
+        mavenCentral()
+        gradlePluginPortal()
+    }
+    settings.dependencyResolutionManagement.repositories {
+        addGoogleRedirector(delegate)
+        mavenCentral()
+    }
+}
+
+allprojects { project ->
+    project.buildscript.repositories {
+        addGoogleRedirector(delegate)
+        mavenCentral()
+        gradlePluginPortal()
+    }
+    project.repositories {
+        addGoogleRedirector(delegate)
+        mavenCentral()
+    }
+}
