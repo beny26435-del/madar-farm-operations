@@ -30,8 +30,17 @@ export type Database = {
         { profile_id?: string | null; full_name: string; email: string; status?: "active" | "inactive" }
       >;
       daily_reports: Table<
-        { id: string; employee_id: string; report_date: string; start_time: string | null; end_time: string | null; work_summary: string; issues: string | null; actions_taken: string | null; notes: string | null; status: "draft" | "submitted" | "approved" | "rejected" | "revision_requested"; submitted_at: string | null; deleted_at: string | null; created_at: string; updated_at: string },
-        { employee_id: string; report_date: string; start_time?: string | null; end_time?: string | null; work_summary?: string; issues?: string | null; actions_taken?: string | null; notes?: string | null; status?: "draft" | "submitted" | "approved" | "rejected" | "revision_requested"; submitted_at?: string | null; deleted_at?: string | null }
+        { id: string; employee_id: string; report_date: string; start_time: string | null; end_time: string | null; location: string; work_summary: string; issues: string | null; actions_taken: string | null; notes: string | null; status: "draft" | "submitted" | "approved" | "rejected" | "revision_requested"; submitted_at: string | null; deleted_at: string | null; created_at: string; updated_at: string },
+        { employee_id: string; report_date: string; start_time?: string | null; end_time?: string | null; location?: string; work_summary?: string; issues?: string | null; actions_taken?: string | null; notes?: string | null; status?: "draft" | "submitted" | "approved" | "rejected" | "revision_requested"; submitted_at?: string | null; deleted_at?: string | null }
+      >;
+      daily_report_collaborators: Table<
+        { daily_report_id: string; employee_id: string; created_at: string },
+        { daily_report_id: string; employee_id: string; created_at?: string }
+      >;
+      daily_tasks: Table<
+        { id: string; title: string; task_date: string; created_by: string; completed_by: string | null; completed_at: string | null; created_at: string },
+        { title: string; task_date: string; created_by: string; completed_by?: string | null; completed_at?: string | null },
+        { title?: string; completed_by?: string | null; completed_at?: string | null }
       >;
       daily_report_expenses: Table<
         { id: string; daily_report_id: string; description: string; amount: number; invoice_path: string | null; invoice_original_name: string | null; invoice_mime_type: string | null; invoice_size_bytes: number | null; created_at: string },

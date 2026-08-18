@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowLeft, ArrowRight, CalendarDays, Check, CheckCircle2, ChevronLeft, ChevronRight, Clock3, FileText, ImagePlus, Plus, ReceiptText, ShieldCheck, Trash2, UserRound } from "lucide-react";
+import { ArrowLeft, ArrowRight, CalendarDays, Check, CheckCircle2, ChevronLeft, ChevronRight, Clock3, FileText, ImagePlus, MapPin, Plus, ReceiptText, ShieldCheck, Trash2, UserRound, UsersRound } from "lucide-react";
 import { useState } from "react";
 import { gregorianToJalali, isValidTime, jalaliToGregorian, normalizeTime, parseJalaliDate } from "@/lib/date/jalali";
 
@@ -16,18 +16,20 @@ type FormState = {
   day: string;
   startTime: string;
   endTime: string;
+  location: string;
+  collaboratorIds: string[];
   workSummary: string;
 };
 
 type ExpenseItem = { id: string; description: string; amount: string; invoice: File | null };
 
-const emptyForm: FormState = { year: "", month: "", day: "", startTime: "", endTime: "", workSummary: "" };
+const emptyForm: FormState = { year: "", month: "", day: "", startTime: "", endTime: "", location: "", collaboratorIds: [], workSummary: "" };
 
 function normalizeAmount(value: string) {
   return value.replace(/[۰-۹]/g, (digit) => String("۰۱۲۳۴۵۶۷۸۹".indexOf(digit))).replace(/[^\d]/g, "").slice(0, 12);
 }
 
-export function DailyReportForm({ displayName }: { displayName: string }) {
+export function DailyReportForm({ displayName, collaborators }: { displayName: string; collaborators: Array<{ id: string; fullName: string }> }) {
   const today = new Date();
   const currentJalali = gregorianToJalali(today.getFullYear(), today.getMonth() + 1, today.getDate());
   const [step, setStep] = useState(0);
@@ -81,6 +83,11 @@ export function DailyReportForm({ displayName }: { displayName: string }) {
     setError(null);
   }
 
+  function toggleCollaborator(id: string) {
+    setForm((current) => ({ ...current, collaboratorIds: current.collaboratorIds.includes(id) ? current.collaboratorIds.filter((value) => value !== id) : [...current.collaboratorIds, id] }));
+    setError(null);
+  }
+
   const firstGregorian = jalaliToGregorian(viewYear, viewMonth, 1);
   const firstWeekDay = (new Date(firstGregorian.year, firstGregorian.month - 1, firstGregorian.day).getDay() + 1) % 7;
   const monthLength = viewMonth <= 6 ? 31 : viewMonth <= 11 ? 30 : parseJalaliDate(String(viewYear), "12", "30") ? 30 : 29;
@@ -91,6 +98,7 @@ export function DailyReportForm({ displayName }: { displayName: string }) {
     if (step === 0) {
       if (!parseJalaliDate(form.year, form.month, form.day)) return "تاریخ شمسی را کامل و درست وارد کنید.";
       if (!isValidTime(form.startTime) || !isValidTime(form.endTime)) return "ساعت ورود و خروج را کامل وارد کنید.";
+      if (form.location.trim().length < 2) return "محل انجام کار را وارد کنید.";
     }
     if (step === 1 && form.workSummary.trim().length < 2) return "شرح فعالیت‌های انجام‌شده را وارد کنید.";
     if (step === 2 && expenses.some((expense) => expense.description.trim().length < 2 || Number(expense.amount) <= 0)) return "شرح و مبلغ همه مخارج اضافه‌شده را کامل کنید.";
@@ -170,6 +178,8 @@ export function DailyReportForm({ displayName }: { displayName: string }) {
                   <label className="field"><span className="field-label">ساعت ورود <span className="required-mark">ضروری</span></span><span className="time-input-wrap"><Clock3 /><input className="input time-text-input" type="text" inputMode="numeric" maxLength={5} autoComplete="off" aria-label="ساعت ورود" dir="ltr" value={form.startTime} onChange={(event) => update("startTime", normalizeTime(event.target.value))} /></span></label>
                   <label className="field"><span className="field-label">ساعت خروج <span className="required-mark">ضروری</span></span><span className="time-input-wrap"><Clock3 /><input className="input time-text-input" type="text" inputMode="numeric" maxLength={5} autoComplete="off" aria-label="ساعت خروج" dir="ltr" value={form.endTime} onChange={(event) => update("endTime", normalizeTime(event.target.value))} /></span></label>
                 </div>
+                <label className="field report-location-field"><span className="field-label">محل انجام کار <span className="required-mark">ضروری</span></span><span className="time-input-wrap"><MapPin /><input className="input" autoComplete="off" value={form.location} onChange={(event) => update("location", event.target.value)} /></span></label>
+                <div className="report-collaborators"><div className="report-collaborators-title"><span><UsersRound /></span><div><strong>همکاران همراه</strong><small>در صورت همراه بودن همکار، نام او را انتخاب کنید.</small></div><em>{form.collaboratorIds.length ? `${faNumber(form.collaboratorIds.length)} نفر` : "اختیاری"}</em></div>{collaborators.length ? <div className="collaborator-options">{collaborators.map((collaborator) => <label className={form.collaboratorIds.includes(collaborator.id) ? "selected" : ""} key={collaborator.id}><input type="checkbox" checked={form.collaboratorIds.includes(collaborator.id)} onChange={() => toggleCollaborator(collaborator.id)} /><span>{form.collaboratorIds.includes(collaborator.id) && <Check />}</span><strong>{collaborator.fullName}</strong></label>)}</div> : <p className="collaborator-empty">همکار فعال دیگری در سامانه وجود ندارد.</p>}</div>
               </>}
 
               {step === 1 && <>

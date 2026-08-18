@@ -15,7 +15,7 @@ export type Permission =
   | "settings:manage";
 
 export const roleLabels: Record<AppRole, string> = {
-  admin: "مدیر سیستم",
+  admin: "مدیر اصلی",
   manager: "مدیر عملیات",
   employee: "کارمند",
 };
@@ -27,7 +27,7 @@ const permissions: Record<AppRole, ReadonlySet<Permission>> = {
   ]),
   manager: new Set<Permission>([
     "dashboard:view", "daily-report:write", "maintenance-report:write",
-    "reports:review", "employees:view", "employees:manage", "customers:view", "customers:manage", "activity:view",
+    "employees:view", "employees:manage", "customers:view", "customers:manage", "activity:view",
   ]),
   employee: new Set<Permission>([
     "dashboard:view", "daily-report:write", "maintenance-report:write",

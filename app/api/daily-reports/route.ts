@@ -11,6 +11,8 @@ const reportSchema = z.object({
   day: z.string().trim().min(1).max(2),
   startTime: z.string().trim(),
   endTime: z.string().trim(),
+  location: z.string().trim().min(2).max(200),
+  collaboratorIds: z.array(z.string().uuid()).max(20).refine((values) => new Set(values).size === values.length),
   workSummary: z.string().trim().min(2).max(5000),
 });
 
@@ -76,11 +78,16 @@ export async function POST(request: Request) {
   }
 
   const admin = createAdminClient();
+  if (input.collaboratorIds.length > 0) {
+    const { data: collaborators, error: collaboratorsError } = await admin.from("employees").select("id").in("id", input.collaboratorIds).eq("status", "active").neq("id", employee.id);
+    if (collaboratorsError || collaborators?.length !== input.collaboratorIds.length) return NextResponse.json({ message: "یکی از همکاران انتخاب‌شده معتبر نیست." }, { status: 400 });
+  }
   const { data: report, error } = await admin.from("daily_reports").insert({
     employee_id: employee.id,
     report_date: reportDate,
     start_time: startTime,
     end_time: endTime,
+    location: input.location,
     work_summary: input.workSummary,
     status: "submitted",
     submitted_at: new Date().toISOString(),
@@ -89,6 +96,14 @@ export async function POST(request: Request) {
   if (error) {
     const message = error.code === "23505" ? "برای این تاریخ قبلاً گزارش ثبت کرده‌اید." : "ذخیره گزارش انجام نشد. دوباره تلاش کنید.";
     return NextResponse.json({ message }, { status: error.code === "23505" ? 409 : 500 });
+  }
+
+  if (input.collaboratorIds.length > 0) {
+    const { error: collaboratorError } = await admin.from("daily_report_collaborators").insert(input.collaboratorIds.map((employeeId) => ({ daily_report_id: report.id, employee_id: employeeId })));
+    if (collaboratorError) {
+      await admin.from("daily_reports").delete().eq("id", report.id);
+      return NextResponse.json({ message: "ذخیره همکاران همراه انجام نشد." }, { status: 500 });
+    }
   }
 
   const uploadedPaths: string[] = [];
@@ -127,6 +142,6 @@ export async function POST(request: Request) {
       return NextResponse.json({ message: "ذخیره مخارج انجام نشد. دوباره تلاش کنید." }, { status: 500 });
     }
   }
-  await recordActivity({ actorId: profileId, action: "daily_report.submitted", entityType: "daily_report", entityId: report.id, metadata: { summary: input.workSummary.slice(0, 180), report_date: reportDate } });
+  await recordActivity({ actorId: profileId, action: "daily_report.submitted", entityType: "daily_report", entityId: report.id, metadata: { summary: input.workSummary.slice(0, 180), report_date: reportDate, location: input.location } });
   return NextResponse.json({ id: report.id, message: "گزارش با موفقیت ثبت شد." }, { status: 201 });
 }

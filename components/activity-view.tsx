@@ -9,6 +9,9 @@ type Category = "all" | "reports" | "customers" | "employees";
 
 const actionCopy: Record<string, { verb: string; category: Exclude<Category, "all">; tone: string }> = {
   "daily_report.submitted": { verb: "گزارش روزانه ثبت کرد", category: "reports", tone: "blue" },
+  "daily_task.created": { verb: "یک کار روزانه اضافه کرد", category: "reports", tone: "blue" },
+  "daily_task.completed": { verb: "یک کار روزانه را انجام داد", category: "reports", tone: "green" },
+  "daily_task.reopened": { verb: "یک کار روزانه را به فهرست برگرداند", category: "reports", tone: "amber" },
   "report.approved": { verb: "گزارش را تأیید کرد", category: "reports", tone: "green" },
   "report.rejected": { verb: "گزارش را رد کرد", category: "reports", tone: "red" },
   "report.revision_requested": { verb: "برای گزارش درخواست اصلاح ثبت کرد", category: "reports", tone: "amber" },
@@ -23,7 +26,7 @@ const actionCopy: Record<string, { verb: string; category: Exclude<Category, "al
 };
 
 function actionIcon(action: string) {
-  if (action === "report.approved") return <CheckCircle2 />;
+  if (action === "report.approved" || action === "daily_task.completed") return <CheckCircle2 />;
   if (action === "report.rejected") return <XCircle />;
   if (action === "report.revision_requested") return <RefreshCcw />;
   if (action === "customer.created") return <ContactRound />;
@@ -35,6 +38,7 @@ function actionIcon(action: string) {
 
 function detailFor(item: ActivityItem) {
   if (item.action === "daily_report.submitted") return item.metadata.summary;
+  if (item.action.startsWith("daily_task.")) return item.metadata.title;
   if (item.action.startsWith("report.")) return item.metadata.title || item.metadata.comment;
   if (item.action === "customer.created") return item.metadata.customer_name;
   if (item.action === "repair_intake.created") return [item.metadata.customer_name, item.metadata.total_quantity ? `${item.metadata.total_quantity} وسیله` : ""].filter(Boolean).join(" · ");

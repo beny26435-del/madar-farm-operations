@@ -20,7 +20,7 @@ export async function POST(request: Request, context: { params: Promise<{ type: 
   const reviewerId = claimsData?.claims?.sub;
   if (!reviewerId) return NextResponse.json({ message: "نشست معتبر نیست." }, { status: 401 });
   const { data: reviewer } = await supabase.from("profiles").select("role, is_active").eq("id", reviewerId).maybeSingle();
-  if (!reviewer?.is_active || !["admin", "manager"].includes(reviewer.role)) return NextResponse.json({ message: "اجازه بررسی گزارش را ندارید." }, { status: 403 });
+  if (!reviewer?.is_active || reviewer.role !== "admin") return NextResponse.json({ message: "اجازه بررسی گزارش را ندارید." }, { status: 403 });
 
   const parsed = reviewSchema.safeParse(await request.json().catch(() => null));
   if (!parsed.success) return NextResponse.json({ message: "برای رد یا درخواست اصلاح، توضیح تصمیم را وارد کنید." }, { status: 400 });

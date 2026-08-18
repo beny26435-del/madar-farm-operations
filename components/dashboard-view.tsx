@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { CalendarDays, ChevronLeft, ClipboardCheck, Clock3, FileText, Sparkles, UserRound, Wrench } from "lucide-react";
+import { DailyTaskBoard, type DailyTask } from "./daily-task-board";
 import { EmptyState, StatusBadge } from "./ui";
 
 export type DashboardReport = {
@@ -28,7 +29,7 @@ function initials(name: string) {
   return name.trim().split(/\s+/).slice(0, 2).map((part) => part[0]).join("");
 }
 
-export function DashboardView({ reports, today }: { reports: DashboardReport[]; today: string }) {
+export function DashboardView({ reports, tasks, today }: { reports: DashboardReport[]; tasks: DailyTask[]; today: string }) {
   const reviewQueue = reports.filter((report) => report.status === "submitted" || report.status === "revision_requested");
   const approvedCount = reports.filter((report) => report.status === "approved").length;
   const todayCount = reports.filter((report) => report.report_date === today).length;
@@ -54,6 +55,8 @@ export function DashboardView({ reports, today }: { reports: DashboardReport[]; 
           <div><span className="eyebrow"><Sparkles /> {todayLabel()}</span><h1>خوش آمدید</h1><p>پس از ثبت اطلاعات واقعی، وضعیت عملیات در این صفحه نمایش داده می‌شود.</p></div>
           <div className="quick-actions"><Link className="button button-secondary" href="/maintenance/new"><Wrench /> ثبت تعمیرات</Link><Link className="button button-primary" href="/daily-reports/new"><FileText /> گزارش روزانه</Link></div>
         </div>
+
+        <DailyTaskBoard initialTasks={tasks} />
 
         <section className="stats-grid" aria-label="شاخص‌های کلیدی">
           {stats.map((item) => <article className={`stat-card stat-${item.tone}`} key={item.label}><div className="stat-head"><span>{item.label}</span><i><item.icon /></i></div><strong className="numeric">{item.value.toLocaleString("fa-IR")}</strong><small>{item.caption}</small></article>)}

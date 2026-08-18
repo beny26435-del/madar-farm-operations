@@ -8,7 +8,7 @@ const read = (path) => readFile(new URL(path, root), "utf8");
 
 test("خروجی Next.js همه مسیرهای اصلی را دارد", async () => {
   const manifest = JSON.parse(await read(".next/server/app-paths-manifest.json"));
-  for (const route of ["/login/page", "/dashboard/page", "/daily-reports/page", "/maintenance/page", "/maintenance/new/page", "/employees/page", "/employees/new/page", "/customers/page", "/customers/new/page", "/customers/[id]/page", "/reports/page", "/activity/page", "/confirm/[token]/page", "/api/users/route", "/api/daily-reports/route", "/api/maintenance-intakes/route", "/api/customers/route", "/api/customers/[id]/items/route", "/api/customers/[id]/items/[itemId]/route", "/api/customers/[id]/items/[itemId]/confirmation/route", "/api/confirmations/[token]/route", "/api/reports/[type]/[id]/review/route"]) {
+  for (const route of ["/login/page", "/dashboard/page", "/daily-reports/page", "/maintenance/page", "/maintenance/new/page", "/employees/page", "/employees/new/page", "/customers/page", "/customers/new/page", "/customers/[id]/page", "/reports/page", "/activity/page", "/confirm/[token]/page", "/api/users/route", "/api/daily-reports/route", "/api/daily-tasks/route", "/api/maintenance-intakes/route", "/api/customers/route", "/api/customers/[id]/items/route", "/api/customers/[id]/items/[itemId]/route", "/api/customers/[id]/items/[itemId]/confirmation/route", "/api/confirmations/[token]/route", "/api/reports/[type]/[id]/review/route"]) {
     assert.ok(manifest[route], `missing ${route}`);
   }
 });
@@ -43,6 +43,55 @@ test("گزارش روزانه واقعاً در Supabase ثبت می‌شود", 
   assert.match(api, /status: "submitted"/);
   assert.match(form, /fetch\("\/api\/daily-reports"/);
   assert.doesNotMatch(form, /نام کارمند.*input/s);
+});
+
+test("گزارش روزانه محل پروژه و همکاران همراه را ذخیره می‌کند", async () => {
+  const page = await read("app/daily-reports/new/page.tsx");
+  const form = await read("components/daily-report-form.tsx");
+  const api = await read("app/api/daily-reports/route.ts");
+  const list = await read("components/report-list-view.tsx");
+  const migration = await read("supabase/migrations/202608180009_daily_report_collaborators_and_tasks.sql");
+  assert.match(page, /from\("employees"\)/);
+  assert.match(form, /محل انجام کار/);
+  assert.match(form, /همکاران همراه/);
+  assert.match(form, /type="checkbox"/);
+  assert.match(api, /location: input\.location/);
+  assert.match(api, /from\("daily_report_collaborators"\)\.insert/);
+  assert.match(list, /report-project-meta/);
+  assert.match(migration, /add column location text/);
+  assert.match(migration, /create table public\.daily_report_collaborators/);
+});
+
+test("فقط ادمین اصلی همه گزارش‌ها را می‌بیند و کاربران فقط گزارش خود را", async () => {
+  const page = await read("app/daily-reports/page.tsx");
+  const roles = await read("lib/auth/roles.ts");
+  const reviewApi = await read("app/api/reports/[type]/[id]/review/route.ts");
+  const migration = await read("supabase/migrations/202608180009_daily_report_collaborators_and_tasks.sql");
+  assert.match(page, /showAllReports=\{viewer\.role === "admin"\}/);
+  assert.doesNotMatch(roles.match(/manager: new Set<Permission>\(\[[\s\S]*?\]\)/)?.[0] ?? "", /reports:review/);
+  assert.match(reviewApi, /reviewer\.role !== "admin"/);
+  assert.match(migration, /display_name = 'میلاد'/);
+  assert.match(migration, /public\.current_app_role\(\) = 'admin'/);
+  assert.match(migration, /employee_id = public\.current_employee_id\(\)/);
+});
+
+test("لیست مشترک کارهای روزانه در داشبورد قابل افزودن و تکمیل است", async () => {
+  const dashboardPage = await read("app/dashboard/page.tsx");
+  const dashboard = await read("components/dashboard-view.tsx");
+  const board = await read("components/daily-task-board.tsx");
+  const api = await read("app/api/daily-tasks/route.ts");
+  const migration = await read("supabase/migrations/202608180009_daily_report_collaborators_and_tasks.sql");
+  assert.match(dashboardPage, /from\("daily_tasks"\)/);
+  assert.match(dashboard, /DailyTaskBoard/);
+  assert.match(board, /کارهای امروز/);
+  assert.match(board, /در حال انجام/);
+  assert.match(board, /انجام‌شده/);
+  assert.match(board, /method: "POST"/);
+  assert.match(board, /method: "PATCH"/);
+  assert.match(api, /from\("daily_tasks"\)\.insert/);
+  assert.match(api, /from\("daily_tasks"\)\.update/);
+  assert.match(migration, /create table public\.daily_tasks/);
+  assert.match(migration, /daily_tasks_select/);
 });
 
 test("مرحله سوم مخارج اختیاری و فاکتور تصویری را ذخیره می‌کند", async () => {
