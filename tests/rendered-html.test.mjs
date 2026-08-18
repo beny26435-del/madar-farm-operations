@@ -174,8 +174,20 @@ test("پروژه اندروید MinePlus امن و آماده Android Studio ا�
   assert.match(activity, /https:\/\/list-mine\.vercel\.app\/dashboard/);
   assert.match(activity, /onShowFileChooser/);
   assert.match(activity, /setMixedContentMode\(WebSettings\.MIXED_CONTENT_NEVER_ALLOW\)/);
+  assert.match(activity, /setSaveFormData\(false\)/);
+  assert.match(activity, /registerDefaultNetworkCallback/);
+  assert.match(activity, /onNewIntent/);
+  assert.match(manifest, /android\.permission\.ACCESS_NETWORK_STATE/);
   assert.match(gradle, /applicationId = "app\.mineplus"/);
   assert.match(gradle, /isMinifyEnabled = true/);
+});
+
+test("در منوی موبایل، گزارش دکمه اصلی است و تعمیرات جای روزانه قرار دارد", async () => {
+  const shell = await read("components/app-shell.tsx");
+  assert.match(shell, /href="\/maintenance\/new" className=\{active\("\/maintenance"\)[\s\S]*?<span>تعمیرات<\/span>/);
+  assert.match(shell, /href="\/daily-reports\/new" className=\{`mobile-nav-primary[\s\S]*?<em>گزارش<\/em>/);
+  assert.doesNotMatch(shell, /<span>روزانه<\/span>/);
+  assert.ok(shell.indexOf('{ href: "/maintenance"') < shell.indexOf('{ href: "/daily-reports"'));
 });
 
 test("PWA روی Android و iOS نصب‌پذیر و دارای fallback آفلاین است", async () => {

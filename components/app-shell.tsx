@@ -15,9 +15,9 @@ import type { Viewer } from "@/lib/auth/types";
 
 const nav = [
   { href: "/dashboard", label: "داشبورد", icon: Gauge, permission: "dashboard:view" },
-  { href: "/daily-reports", label: "گزارش روزانه", icon: CalendarDays, permission: "daily-report:write" },
-  { href: "/daily-tasks", label: "کارهای روزانه", icon: ListTodo, permission: "dashboard:view" },
   { href: "/maintenance", label: "تعمیرات و سرویس", icon: Wrench, permission: "maintenance-report:write" },
+  { href: "/daily-reports", label: "گزارش", icon: CalendarDays, permission: "daily-report:write" },
+  { href: "/daily-tasks", label: "کارهای روزانه", icon: ListTodo, permission: "dashboard:view" },
   { href: "/employees", label: "کارکنان", icon: Users, permission: "employees:view" },
   { href: "/customers", label: "مشتریان", icon: ContactRound, permission: "customers:view" },
   { href: "/technicians", label: "تعمیرکاران", icon: HardHat, permission: "technician-jobs:manage" },
@@ -121,8 +121,8 @@ export function AppShell({ children, viewer }: { children: React.ReactNode; view
 
       <nav className="mobile-nav" aria-label="ناوبری موبایل">
         <Link href="/dashboard" className={active("/dashboard") ? "active" : ""}><Home /><span>خانه</span></Link>
-        <Link href="/daily-reports/new" className={active("/daily-reports") ? "active" : ""}><CalendarDays /><span>روزانه</span></Link>
-        <Link href="/maintenance/new" className={`mobile-nav-primary ${active("/maintenance") ? "active" : ""}`}><span><Wrench /></span><em>تعمیرات</em></Link>
+        <Link href="/maintenance/new" className={active("/maintenance") ? "active" : ""}><Wrench /><span>تعمیرات</span></Link>
+        <Link href="/daily-reports/new" className={`mobile-nav-primary ${active("/daily-reports") ? "active" : ""}`}><span><CalendarDays /></span><em>گزارش</em></Link>
         <Link href="/daily-reports" className={pathname === "/daily-reports" ? "active" : ""}><FileBarChart /><span>سوابق</span></Link>
         <button onClick={() => setMoreOpen(true)}><Menu /><span>بیشتر</span></button>
       </nav>

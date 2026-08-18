@@ -2,6 +2,6 @@
 <resources>
     <string name="app_name">MinePlus</string>
     <string name="offline_title">اتصال برقرار نیست</string>
-    <string name="offline_description">اینترنت دستگاه را بررسی کنید و دوباره تلاش کنید.</string>
+    <string name="offline_description">ورود شما روی دستگاه محفوظ است. اینترنت را بررسی کنید؛ برنامه پس از برقراری اتصال دوباره تلاش می‌کند.</string>
     <string name="retry">تلاش دوباره</string>
 </resources>

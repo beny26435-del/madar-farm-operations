@@ -1,8 +1,11 @@
 package app.mineplus;
 
 import android.annotation.SuppressLint;
+import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
+import android.net.ConnectivityManager;
+import android.net.Network;
 import android.net.Uri;
 import android.os.Bundle;
 import android.view.View;
@@ -36,6 +39,18 @@ public class MainActivity extends AppCompatActivity {
     private ProgressBar progressBar;
     private View offlineView;
     private ValueCallback<Uri[]> fileCallback;
+    private ConnectivityManager connectivityManager;
+
+    private final ConnectivityManager.NetworkCallback networkCallback = new ConnectivityManager.NetworkCallback() {
+        @Override public void onAvailable(@NonNull Network network) {
+            runOnUiThread(() -> {
+                if (offlineView != null && offlineView.getVisibility() == View.VISIBLE) {
+                    offlineView.setVisibility(View.GONE);
+                    webView.reload();
+                }
+            });
+        }
+    };
 
     private final ActivityResultLauncher<Intent> filePicker = registerForActivityResult(
         new ActivityResultContracts.StartActivityForResult(),
@@ -56,6 +71,7 @@ public class MainActivity extends AppCompatActivity {
         refreshLayout = findViewById(R.id.refresh_layout);
         progressBar = findViewById(R.id.progress_bar);
         offlineView = findViewById(R.id.offline_view);
+        connectivityManager = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
         Button retryButton = findViewById(R.id.retry_button);
 
         configureWebView();
@@ -75,11 +91,17 @@ public class MainActivity extends AppCompatActivity {
         });
 
         if (savedInstanceState == null) {
-            Uri deepLink = getIntent().getData();
-            webView.loadUrl(deepLink != null && APP_HOST.equals(deepLink.getHost()) ? deepLink.toString() : APP_URL);
+            loadIntentUrl(getIntent());
         } else {
             webView.restoreState(savedInstanceState);
         }
+
+        connectivityManager.registerDefaultNetworkCallback(networkCallback);
+    }
+
+    private void loadIntentUrl(Intent intent) {
+        Uri deepLink = intent.getData();
+        webView.loadUrl(deepLink != null && "https".equals(deepLink.getScheme()) && APP_HOST.equals(deepLink.getHost()) ? deepLink.toString() : APP_URL);
     }
 
     @SuppressLint("SetJavaScriptEnabled")
@@ -88,13 +110,15 @@ public class MainActivity extends AppCompatActivity {
         settings.setJavaScriptEnabled(true);
         settings.setDomStorageEnabled(true);
         settings.setDatabaseEnabled(true);
+        settings.setCacheMode(WebSettings.LOAD_DEFAULT);
+        settings.setSaveFormData(false);
         settings.setAllowFileAccess(false);
         settings.setAllowContentAccess(true);
         settings.setMixedContentMode(WebSettings.MIXED_CONTENT_NEVER_ALLOW);
         settings.setSupportMultipleWindows(false);
         settings.setBuiltInZoomControls(false);
         settings.setDisplayZoomControls(false);
-        settings.setUserAgentString(settings.getUserAgentString() + " MinePlus/1.0 Android");
+        settings.setUserAgentString(settings.getUserAgentString() + " MinePlus/1.1 Android");
 
         CookieManager cookies = CookieManager.getInstance();
         cookies.setAcceptCookie(true);
@@ -163,7 +187,25 @@ public class MainActivity extends AppCompatActivity {
         super.onSaveInstanceState(outState);
     }
 
+    @Override protected void onNewIntent(Intent intent) {
+        super.onNewIntent(intent);
+        setIntent(intent);
+        loadIntentUrl(intent);
+    }
+
+    @Override protected void onPause() {
+        CookieManager.getInstance().flush();
+        webView.onPause();
+        super.onPause();
+    }
+
+    @Override protected void onResume() {
+        super.onResume();
+        webView.onResume();
+    }
+
     @Override protected void onDestroy() {
+        connectivityManager.unregisterNetworkCallback(networkCallback);
         if (fileCallback != null) fileCallback.onReceiveValue(null);
         webView.stopLoading();
         webView.destroy();

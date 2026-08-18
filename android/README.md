@@ -1,13 +1,14 @@
 # MinePlus Android
 
-پروژه Android Studio برای نسخه موبایل سامانه MinePlus است. رابط اصلی از دامنه امن `https://list-mine.vercel.app` بارگذاری می‌شود و نشست ورود، آپلود تصویر، pull-to-refresh، deep link، مدیریت بازگشت و صفحه آفلاین را پشتیبانی می‌کند.
+پروژه Android Studio برای نسخه موبایل سامانه MinePlus است. رابط اصلی از دامنه امن `https://list-mine.vercel.app` بارگذاری می‌شود و همه قابلیت‌های سامانه، نشست ورود پایدار، آپلود تصویر، pull-to-refresh، deep link، مدیریت بازگشت، بازیابی خودکار اتصال و صفحه آفلاین را پشتیبانی می‌کند. Autofill نیز برای فرم‌های برنامه غیرفعال است.
 
 ## خروجی آماده
 
-نسخه `1.0.0` با شناسه `app.mineplus` ساخته و با کلید اختصاصی انتشار امضا شده است:
+نسخه `1.1.0` با شناسه `app.mineplus` ساخته و با کلید اختصاصی انتشار امضا شده است:
 
-- `releases/MinePlus-1.0.0-release.apk` برای نصب مستقیم
-- `releases/MinePlus-1.0.0-release.aab` برای انتشار در Google Play
+- `releases/MinePlus-1.1.0-release.apk` برای نصب مستقیم
+- `releases/MinePlus-1.1.0-release.aab` برای انتشار در Google Play
+- `releases/MinePlus-1.1.0-mapping.txt` برای رمزگشایی گزارش خطاهای نسخه انتشار
 
 فایل‌های خروجی و کلید امضا عمداً در Git قرار نمی‌گیرند. کلید دائمی در مسیر `/Users/ben/.mineplus-signing/mineplus-release.jks` با alias برابر `mineplus-release` نگهداری می‌شود. رمزهای کلید در Keychain مک با سرویس‌های `MinePlus Release Store Password` و `MinePlus Release Key Password` ذخیره شده‌اند.
 
