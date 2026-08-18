@@ -40,3 +40,12 @@ yarn-error.log*
 /work/
 /screenshots/
 *.tsbuildinfo
+
+# Android Studio
+/android/.gradle/
+/android/.idea/
+/android/local.properties
+/android/**/build/
+/android/captures/
+*.jks
+*.keystore

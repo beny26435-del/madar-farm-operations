@@ -8,6 +8,7 @@ export const dynamic = "force-dynamic";
 export default async function NewDailyReportPage() {
   const viewer = await requireViewer();
   const admin = createAdminClient();
-  const { data: employees } = await admin.from("employees").select("id, full_name, profile_id").eq("status", "active").neq("profile_id", viewer.id).order("full_name");
-  return <AppShell viewer={viewer}><DailyReportForm displayName={viewer.displayName} collaborators={(employees ?? []).map(({ id, full_name }) => ({ id, fullName: full_name }))} /></AppShell>;
+  const { data: employees } = await admin.from("employees").select("id, full_name, profile_id").eq("status", "active").order("full_name");
+  const collaborators = (employees ?? []).filter((employee) => employee.profile_id !== viewer.id || employee.full_name.trim() === "میلاد").map(({ id, full_name }) => ({ id, fullName: full_name }));
+  return <AppShell viewer={viewer}><DailyReportForm displayName={viewer.displayName} collaborators={collaborators} /></AppShell>;
 }

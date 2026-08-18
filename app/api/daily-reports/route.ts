@@ -79,8 +79,9 @@ export async function POST(request: Request) {
 
   const admin = createAdminClient();
   if (input.collaboratorIds.length > 0) {
-    const { data: collaborators, error: collaboratorsError } = await admin.from("employees").select("id").in("id", input.collaboratorIds).eq("status", "active").neq("id", employee.id);
-    if (collaboratorsError || collaborators?.length !== input.collaboratorIds.length) return NextResponse.json({ message: "یکی از همکاران انتخاب‌شده معتبر نیست." }, { status: 400 });
+    const { data: collaborators, error: collaboratorsError } = await admin.from("employees").select("id, full_name").in("id", input.collaboratorIds).eq("status", "active");
+    const hasInvalidSelfSelection = collaborators?.some((collaborator) => collaborator.id === employee.id && collaborator.full_name.trim() !== "میلاد");
+    if (collaboratorsError || collaborators?.length !== input.collaboratorIds.length || hasInvalidSelfSelection) return NextResponse.json({ message: "یکی از همکاران انتخاب‌شده معتبر نیست." }, { status: 400 });
   }
   const { data: report, error } = await admin.from("daily_reports").insert({
     employee_id: employee.id,

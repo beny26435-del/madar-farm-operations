@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">MinePlus</string>
+    <string name="offline_title">اتصال برقرار نیست</string>
+    <string name="offline_description">اینترنت دستگاه را بررسی کنید و دوباره تلاش کنید.</string>
+    <string name="retry">تلاش دوباره</string>
+</resources>

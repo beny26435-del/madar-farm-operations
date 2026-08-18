@@ -4,8 +4,8 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   Activity, Bell, CalendarDays, ChevronLeft, ChevronsLeft, ChevronsRight,
-  CircleHelp, ContactRound, FileBarChart, Gauge, Hexagon, Home, LogOut, Menu,
-  Search, Settings, Users, Wrench, X,
+  CircleHelp, ContactRound, FileBarChart, Gauge, HardHat, Hexagon, Home, ListTodo, LogOut, Menu,
+  Search, Settings, UserRound, Users, Wrench, X,
 } from "lucide-react";
 import { useState } from "react";
 import { BottomSheet } from "./ui";
@@ -16,9 +16,11 @@ import type { Viewer } from "@/lib/auth/types";
 const nav = [
   { href: "/dashboard", label: "داشبورد", icon: Gauge, permission: "dashboard:view" },
   { href: "/daily-reports", label: "گزارش روزانه", icon: CalendarDays, permission: "daily-report:write" },
+  { href: "/daily-tasks", label: "کارهای روزانه", icon: ListTodo, permission: "dashboard:view" },
   { href: "/maintenance", label: "تعمیرات و سرویس", icon: Wrench, permission: "maintenance-report:write" },
   { href: "/employees", label: "کارکنان", icon: Users, permission: "employees:view" },
   { href: "/customers", label: "مشتریان", icon: ContactRound, permission: "customers:view" },
+  { href: "/technicians", label: "تعمیرکاران", icon: HardHat, permission: "technician-jobs:manage" },
   { href: "/reports", label: "گزارش‌ها", icon: FileBarChart, permission: "reports:review" },
   { href: "/activity", label: "فعالیت‌ها", icon: Activity, permission: "activity:view" },
 ];
@@ -27,14 +29,17 @@ const pageTitles: Record<string, string> = {
   "/dashboard": "نمای عملیات",
   "/daily-reports": "گزارش‌های روزانه",
   "/daily-reports/new": "ثبت گزارش روزانه",
+  "/daily-tasks": "کارهای روزانه",
   "/maintenance": "تعمیرات و سرویس",
   "/maintenance/new": "ثبت تعمیرات",
   "/employees": "کارکنان",
   "/employees/new": "ساخت کاربر",
   "/customers": "مشتریان",
   "/customers/new": "افزودن مشتری",
+  "/technicians": "تحویل به تعمیرکار",
   "/reports": "بررسی گزارش‌ها",
   "/activity": "فعالیت‌ها",
+  "/profile": "پنل کاربری",
 };
 
 export function AppShell({ children, viewer }: { children: React.ReactNode; viewer: Viewer }) {
@@ -48,6 +53,7 @@ export function AppShell({ children, viewer }: { children: React.ReactNode; view
   const canManageSettings = hasPermission(viewer.role, "settings:manage");
   const currentDate = new Intl.DateTimeFormat("fa-IR", { weekday: "long", day: "numeric", month: "long", year: "numeric" }).format(new Date());
   const currentPageTitle = pageTitles[pathname] ?? (pathname.startsWith("/customers/") ? "پرونده مشتری" : "مدار عملیات");
+  const avatarUrl = viewer.avatarPath ? createClient().storage.from("profile-avatars").getPublicUrl(viewer.avatarPath).data.publicUrl : null;
 
   const active = (href: string) => pathname === href || (href !== "/dashboard" && pathname.startsWith(`${href}/`));
 
@@ -90,7 +96,7 @@ export function AppShell({ children, viewer }: { children: React.ReactNode; view
             <button className="global-search"><Search /><span>جست‌وجو در گزارش‌ها...</span><kbd>⌘ K</kbd></button>
             <span className="topbar-date"><CalendarDays /> {currentDate}</span>
             <button className="topbar-icon notification-button" onClick={() => setNotificationsOpen(!notificationsOpen)} aria-label="اعلان‌ها"><Bell /></button>
-            <button className="user-button" onClick={() => setUserOpen((value) => !value)} aria-expanded={userOpen}><span className="avatar">{viewer.displayName.slice(0, 1)}</span><span className="user-copy"><strong>{viewer.displayName}</strong><small>{roleLabels[viewer.role]}</small></span><ChevronLeft /></button>
+            <button className="user-button" onClick={() => setUserOpen((value) => !value)} aria-expanded={userOpen}><span className={`avatar ${avatarUrl ? "has-image" : ""}`} style={avatarUrl ? { backgroundImage: `url(${avatarUrl})` } : undefined}>{!avatarUrl && viewer.displayName.slice(0, 1)}</span><span className="user-copy"><strong>{viewer.displayName}</strong><small>{roleLabels[viewer.role]}</small></span><ChevronLeft /></button>
           </div>
           <div className="mobile-topbar">
             <div className="brand"><span className="brand-mark"><Hexagon /><i /></span><span className="brand-copy"><strong>مدار</strong><small>عملیات فارم</small></span></div>
@@ -104,7 +110,8 @@ export function AppShell({ children, viewer }: { children: React.ReactNode; view
           )}
           {userOpen && (
             <div className="user-popover">
-              <div><span className="avatar">{viewer.displayName.slice(0, 1)}</span><p><strong>{viewer.displayName}</strong><small>{roleLabels[viewer.role]}</small></p></div>
+              <div><span className={`avatar ${avatarUrl ? "has-image" : ""}`} style={avatarUrl ? { backgroundImage: `url(${avatarUrl})` } : undefined}>{!avatarUrl && viewer.displayName.slice(0, 1)}</span><p><strong>{viewer.displayName}</strong><small>{roleLabels[viewer.role]}</small></p></div>
+              <Link href="/profile"><UserRound />پنل کاربری</Link>
               <button onClick={signOut} disabled={signingOut}><LogOut />{signingOut ? "در حال خروج..." : "خروج امن از سامانه"}</button>
             </div>
           )}
@@ -124,8 +131,11 @@ export function AppShell({ children, viewer }: { children: React.ReactNode; view
         <div className="more-grid">
           {hasPermission(viewer.role, "employees:view") && <Link href="/employees"><Users />کارکنان</Link>}
           {hasPermission(viewer.role, "customers:view") && <Link href="/customers"><ContactRound />مشتریان</Link>}
+          <Link href="/daily-tasks"><ListTodo />کارهای روزانه</Link>
+          {hasPermission(viewer.role, "technician-jobs:manage") && <Link href="/technicians"><HardHat />تعمیرکاران</Link>}
           {hasPermission(viewer.role, "reports:review") && <Link href="/reports"><FileBarChart />گزارش‌ها</Link>}
           {hasPermission(viewer.role, "activity:view") && <Link href="/activity"><Activity />فعالیت‌ها</Link>}
+          <Link href="/profile"><UserRound />پنل کاربری</Link>
           {canManageSettings && <Link href="/settings"><Settings />تنظیمات</Link>}
           <button><CircleHelp />راهنما</button><button onClick={signOut} disabled={signingOut}><LogOut />خروج</button>
         </div>

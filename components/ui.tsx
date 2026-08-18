@@ -9,12 +9,12 @@ export function StatusBadge({ tone, children }: { tone: StatusTone; children: Re
   return <span className={`status status-${tone}`}>{children}</span>;
 }
 
-export function SelectField({ label, children, hint }: { label: string; children: React.ReactNode; hint?: string }) {
+export function SelectField({ label, children, hint, value, onChange }: { label: string; children: React.ReactNode; hint?: string; value?: string; onChange?: React.ChangeEventHandler<HTMLSelectElement> }) {
   return (
     <label className="field">
       <span className="field-label">{label}{hint && <span className="field-hint">{hint}</span>}</span>
       <span className="input-wrap">
-        <select className="select" autoComplete="off">{children}</select>
+        <select className="select" autoComplete="off" value={value} onChange={onChange}>{children}</select>
         <ChevronDown className="input-icon" aria-hidden />
       </span>
     </label>

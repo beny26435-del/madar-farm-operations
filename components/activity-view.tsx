@@ -1,6 +1,6 @@
 "use client";
 
-import { Activity, CheckCircle2, ContactRound, FileText, PackageCheck, RefreshCcw, Search, UserPlus, Wrench, XCircle } from "lucide-react";
+import { Activity, CheckCircle2, ContactRound, FileText, HardHat, PackageCheck, RefreshCcw, Search, Trash2, UserPlus, Wrench, XCircle } from "lucide-react";
 import { useState } from "react";
 import { EmptyState, ErrorState } from "./ui";
 
@@ -15,6 +15,7 @@ const actionCopy: Record<string, { verb: string; category: Exclude<Category, "al
   "report.approved": { verb: "گزارش را تأیید کرد", category: "reports", tone: "green" },
   "report.rejected": { verb: "گزارش را رد کرد", category: "reports", tone: "red" },
   "report.revision_requested": { verb: "برای گزارش درخواست اصلاح ثبت کرد", category: "reports", tone: "amber" },
+  "report.deleted": { verb: "یک گزارش را حذف کرد", category: "reports", tone: "red" },
   "customer.created": { verb: "پرونده مشتری ساخت", category: "customers", tone: "purple" },
   "repair_intake.created": { verb: "تعمیرات مشتری را ثبت کرد", category: "customers", tone: "amber" },
   "repair_item.received": { verb: "یک مورد برای تعمیر تحویل گرفت", category: "customers", tone: "amber" },
@@ -22,17 +23,24 @@ const actionCopy: Record<string, { verb: string; category: Exclude<Category, "al
   "repair_item.delivery_requested": { verb: "لینک تأیید تحویل ساخت", category: "customers", tone: "amber" },
   "customer_confirmation.intake": { verb: "تحویل وسیله به تعمیرگاه را تأیید کرد", category: "customers", tone: "green" },
   "customer_confirmation.delivery": { verb: "تحویل گرفتن وسیله را تأیید کرد", category: "customers", tone: "green" },
+  "technician_job.created": { verb: "دستگاهی را به تعمیرکار ارجاع داد", category: "customers", tone: "purple" },
+  "technician_link.handover": { verb: "لینک تحویل به تعمیرکار ساخت", category: "customers", tone: "amber" },
+  "technician_link.return": { verb: "لینک بازگشت از تعمیرکار ساخت", category: "customers", tone: "amber" },
+  "technician_confirmation.handover": { verb: "تحویل دستگاه به تعمیرکار را تأیید کرد", category: "customers", tone: "green" },
+  "technician_confirmation.return": { verb: "بازگشت دستگاه از تعمیرکار را تأیید کرد", category: "customers", tone: "green" },
   "employee.created": { verb: "حساب کارمند ساخت", category: "employees", tone: "purple" },
 };
 
 function actionIcon(action: string) {
   if (action === "report.approved" || action === "daily_task.completed") return <CheckCircle2 />;
   if (action === "report.rejected") return <XCircle />;
+  if (action === "report.deleted") return <Trash2 />;
   if (action === "report.revision_requested") return <RefreshCcw />;
   if (action === "customer.created") return <ContactRound />;
   if (action === "repair_item.received" || action === "repair_intake.created") return <Wrench />;
   if (action === "repair_item.delivered") return <PackageCheck />;
   if (action === "employee.created") return <UserPlus />;
+  if (action.startsWith("technician_")) return <HardHat />;
   return <FileText />;
 }
 
@@ -43,6 +51,7 @@ function detailFor(item: ActivityItem) {
   if (item.action === "customer.created") return item.metadata.customer_name;
   if (item.action === "repair_intake.created") return [item.metadata.customer_name, item.metadata.total_quantity ? `${item.metadata.total_quantity} وسیله` : ""].filter(Boolean).join(" · ");
   if (item.action.startsWith("repair_item.") || item.action.startsWith("customer_confirmation.")) return [item.metadata.item_name, item.metadata.customer_name].filter(Boolean).join(" · ");
+  if (item.action.startsWith("technician_")) return [item.metadata.item_name, item.metadata.technician_name].filter(Boolean).join(" · ");
   if (item.action === "employee.created") return item.metadata.employee_name;
   return "";
 }

@@ -57,3 +57,33 @@ export async function POST(request: Request, context: { params: Promise<{ type: 
   const messages = { approved: "گزارش تأیید شد.", rejected: "گزارش رد شد.", revision_requested: "درخواست اصلاح ثبت شد." };
   return NextResponse.json({ message: messages[input.action] });
 }
+
+export async function DELETE(_request: Request, context: { params: Promise<{ type: string; id: string }> }) {
+  const { type, id } = await context.params;
+  if ((type !== "daily" && type !== "maintenance") || !z.string().uuid().safeParse(id).success) return NextResponse.json({ message: "گزارش معتبر نیست." }, { status: 400 });
+  const supabase = await createClient();
+  const { data: claimsData } = await supabase.auth.getClaims();
+  const actorId = claimsData?.claims?.sub;
+  if (!actorId) return NextResponse.json({ message: "نشست معتبر نیست." }, { status: 401 });
+  const { data: actor } = await supabase.from("profiles").select("role, is_active").eq("id", actorId).maybeSingle();
+  if (!actor?.is_active || actor.role !== "admin") return NextResponse.json({ message: "فقط مدیر اصلی اجازه حذف گزارش را دارد." }, { status: 403 });
+
+  const admin = createAdminClient();
+  let title = "";
+  let error = null;
+  if (type === "daily") {
+    const { data: report } = await admin.from("daily_reports").select("id, work_summary").eq("id", id).is("deleted_at", null).maybeSingle();
+    if (!report) return NextResponse.json({ message: "گزارش پیدا نشد یا قبلاً حذف شده است." }, { status: 404 });
+    title = report.work_summary.slice(0, 180);
+    error = (await admin.from("daily_reports").update({ deleted_at: new Date().toISOString() }).eq("id", id).is("deleted_at", null)).error;
+  } else {
+    const { data: report } = await admin.from("maintenance_reports").select("id, title").eq("id", id).is("deleted_at", null).maybeSingle();
+    if (!report) return NextResponse.json({ message: "گزارش پیدا نشد یا قبلاً حذف شده است." }, { status: 404 });
+    title = report.title.slice(0, 180);
+    error = (await admin.from("maintenance_reports").update({ deleted_at: new Date().toISOString() }).eq("id", id).is("deleted_at", null)).error;
+  }
+  if (error) return NextResponse.json({ message: "حذف گزارش انجام نشد." }, { status: 500 });
+
+  await recordActivity({ actorId, action: "report.deleted", entityType: `${type}_report`, entityId: id, metadata: { report_type: type, title } });
+  return NextResponse.json({ message: "گزارش حذف شد." });
+}

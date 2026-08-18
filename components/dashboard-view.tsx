@@ -56,7 +56,7 @@ export function DashboardView({ reports, tasks, today }: { reports: DashboardRep
           <div className="quick-actions"><Link className="button button-secondary" href="/maintenance/new"><Wrench /> ثبت تعمیرات</Link><Link className="button button-primary" href="/daily-reports/new"><FileText /> گزارش روزانه</Link></div>
         </div>
 
-        <DailyTaskBoard initialTasks={tasks} />
+        <DailyTaskBoard initialTasks={tasks.filter((task) => !task.completed_at)} showCompleted={false} />
 
         <section className="stats-grid" aria-label="شاخص‌های کلیدی">
           {stats.map((item) => <article className={`stat-card stat-${item.tone}`} key={item.label}><div className="stat-head"><span>{item.label}</span><i><item.icon /></i></div><strong className="numeric">{item.value.toLocaleString("fa-IR")}</strong><small>{item.caption}</small></article>)}

@@ -2,9 +2,9 @@ import type { MetadataRoute } from "next";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "مدار عملیات فارم",
-    short_name: "مدار",
-    description: "مدیریت گزارش‌های روزانه و تعمیرات فارم",
+    name: "MinePlus",
+    short_name: "MinePlus",
+    description: "مدیریت گزارش‌ها، تعمیرات و عملیات تیم",
     start_url: "/dashboard",
     display: "standalone",
     background_color: "#f4f5f3",

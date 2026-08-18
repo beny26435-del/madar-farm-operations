@@ -27,10 +27,25 @@ async function activeActor() {
   return profile?.is_active ? { actorId, admin } : null;
 }
 
-export async function GET() {
+export async function GET(request: Request) {
   const actor = await activeActor();
   if (!actor) return NextResponse.json({ message: "نشست معتبر نیست." }, { status: 401 });
-  const { data: tasks, error } = await actor.admin.from("daily_tasks").select("id, title, task_date, created_by, completed_by, completed_at, created_at").eq("task_date", tehranDate()).order("created_at");
+  const url = new URL(request.url);
+  const scope = url.searchParams.get("scope");
+  if (scope === "all") {
+    const page = Math.max(1, Math.min(10000, Number(url.searchParams.get("page")) || 1));
+    const pageSize = Math.max(5, Math.min(50, Number(url.searchParams.get("pageSize")) || 20));
+    const status = url.searchParams.get("status") === "completed" ? "completed" : "pending";
+    const search = (url.searchParams.get("search") ?? "").trim().slice(0, 100);
+    let query = actor.admin.from("daily_tasks").select("id, title, task_date, created_by, completed_by, completed_at, created_at", { count: "exact" });
+    query = status === "completed" ? query.not("completed_at", "is", null) : query.is("completed_at", null);
+    if (search) query = query.ilike("title", `%${search}%`);
+    const from = (page - 1) * pageSize;
+    const { data: tasks, error, count } = await query.order("task_date", { ascending: false }).order("created_at", { ascending: false }).range(from, from + pageSize - 1);
+    if (error) return NextResponse.json({ message: "دریافت کارهای روزانه انجام نشد." }, { status: 500 });
+    return NextResponse.json({ tasks: tasks ?? [], count: count ?? 0, page, pageSize });
+  }
+  const { data: tasks, error } = await actor.admin.from("daily_tasks").select("id, title, task_date, created_by, completed_by, completed_at, created_at").eq("task_date", tehranDate()).is("completed_at", null).order("created_at");
   if (error) return NextResponse.json({ message: "دریافت کارهای امروز انجام نشد." }, { status: 500 });
   return NextResponse.json({ tasks: tasks ?? [] });
 }

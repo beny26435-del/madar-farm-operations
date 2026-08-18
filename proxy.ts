@@ -5,7 +5,7 @@ import type { Database } from "@/types/database";
 const publicPaths = new Set(["/login"]);
 
 function isPublicPath(pathname: string) {
-  return publicPaths.has(pathname) || pathname.startsWith("/confirm/") || pathname.startsWith("/api/confirmations/");
+  return publicPaths.has(pathname) || pathname.startsWith("/confirm/") || pathname.startsWith("/api/confirmations/") || pathname.startsWith("/technician-confirm/") || pathname.startsWith("/api/technician-confirmations/");
 }
 
 function secure(response: NextResponse, request: NextRequest) {

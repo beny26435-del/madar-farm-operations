@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="mineplus_primary">#17231D</color>
+    <color name="mineplus_primary_dark">#0E1813</color>
+    <color name="mineplus_accent">#A8C65C</color>
+    <color name="mineplus_background">#F4F5F3</color>
+    <color name="mineplus_text">#17231D</color>
+    <color name="mineplus_muted">#6F7B73</color>
+    <color name="launcher_background">#17231D</color>
+</resources>

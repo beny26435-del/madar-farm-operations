@@ -8,7 +8,7 @@ const read = (path) => readFile(new URL(path, root), "utf8");
 
 test("خروجی Next.js همه مسیرهای اصلی را دارد", async () => {
   const manifest = JSON.parse(await read(".next/server/app-paths-manifest.json"));
-  for (const route of ["/login/page", "/dashboard/page", "/daily-reports/page", "/maintenance/page", "/maintenance/new/page", "/employees/page", "/employees/new/page", "/customers/page", "/customers/new/page", "/customers/[id]/page", "/reports/page", "/activity/page", "/confirm/[token]/page", "/api/users/route", "/api/daily-reports/route", "/api/daily-tasks/route", "/api/maintenance-intakes/route", "/api/customers/route", "/api/customers/[id]/items/route", "/api/customers/[id]/items/[itemId]/route", "/api/customers/[id]/items/[itemId]/confirmation/route", "/api/confirmations/[token]/route", "/api/reports/[type]/[id]/review/route"]) {
+  for (const route of ["/login/page", "/dashboard/page", "/daily-reports/page", "/daily-tasks/page", "/maintenance/page", "/maintenance/new/page", "/employees/page", "/employees/new/page", "/customers/page", "/customers/new/page", "/customers/[id]/page", "/technicians/page", "/profile/page", "/reports/page", "/activity/page", "/confirm/[token]/page", "/technician-confirm/[token]/page", "/api/users/route", "/api/daily-reports/route", "/api/daily-tasks/route", "/api/maintenance-intakes/route", "/api/customers/route", "/api/customers/[id]/items/route", "/api/customers/[id]/items/[itemId]/route", "/api/customers/[id]/items/[itemId]/confirmation/route", "/api/confirmations/[token]/route", "/api/technician-jobs/route", "/api/technician-jobs/[id]/confirmation/route", "/api/technician-confirmations/[token]/route", "/api/profile/avatar/route", "/api/reports/[type]/[id]/review/route"]) {
     assert.ok(manifest[route], `missing ${route}`);
   }
 });
@@ -52,6 +52,7 @@ test("گزارش روزانه محل پروژه و همکاران همراه ر�
   const list = await read("components/report-list-view.tsx");
   const migration = await read("supabase/migrations/202608180009_daily_report_collaborators_and_tasks.sql");
   assert.match(page, /from\("employees"\)/);
+  assert.match(page, /full_name\.trim\(\) === "میلاد"/);
   assert.match(form, /محل انجام کار/);
   assert.match(form, /همکاران همراه/);
   assert.match(form, /type="checkbox"/);
@@ -92,6 +93,79 @@ test("لیست مشترک کارهای روزانه در داشبورد قابل
   assert.match(api, /from\("daily_tasks"\)\.update/);
   assert.match(migration, /create table public\.daily_tasks/);
   assert.match(migration, /daily_tasks_select/);
+  assert.match(dashboardPage, /is\("completed_at", null\)/);
+  assert.match(dashboard, /showCompleted=\{false\}/);
+});
+
+test("آرشیو کارهای روزانه صفحه‌بندی شده و از داشبورد جدا است", async () => {
+  const page = await read("app/daily-tasks/page.tsx");
+  const archive = await read("components/daily-tasks-archive.tsx");
+  const api = await read("app/api/daily-tasks/route.ts");
+  const shell = await read("components/app-shell.tsx");
+  assert.match(page, /DailyTasksArchive/);
+  assert.match(archive, /pageSize = 20/);
+  assert.match(archive, /انجام‌نشده/);
+  assert.match(archive, /انجام‌شده/);
+  assert.match(api, /scope === "all"/);
+  assert.match(api, /\.range\(/);
+  assert.match(shell, /href: "\/daily-tasks"/);
+});
+
+test("فیلتر کارمند و لوکیشن و حذف گزارش فقط برای مدیر اصلی است", async () => {
+  const list = await read("components/report-list-view.tsx");
+  const api = await read("app/api/reports/[type]/[id]/review/route.ts");
+  assert.match(list, /employeeFilter/);
+  assert.match(list, /locationFilter/);
+  assert.match(list, /showAllReports && !maintenance/);
+  assert.match(list, /method: "DELETE"/);
+  assert.match(api, /export async function DELETE/);
+  assert.match(api, /actor\.role !== "admin"/);
+  assert.match(api, /deleted_at: new Date/);
+  assert.match(api, /action: "report\.deleted"/);
+});
+
+test("گردش دستگاه با تعمیرکار دو لینک تأیید امن دارد", async () => {
+  const page = await read("app/technicians/page.tsx");
+  const view = await read("components/technician-jobs-view.tsx");
+  const token = await read("lib/technician-confirmations/token.ts");
+  const publicApi = await read("app/api/technician-confirmations/[token]/route.ts");
+  const migration = await read("supabase/migrations/202608180010_technician_handoffs.sql");
+  const proxy = await read("proxy.ts");
+  assert.match(page, /from\("technician_jobs"\)/);
+  assert.match(view, /لینک تحویل/);
+  assert.match(view, /لینک بازگشت/);
+  assert.match(token, /randomBytes\(32\)/);
+  assert.match(publicApi, /confirm_technician_handover/);
+  assert.match(migration, /create table public\.technician_jobs/);
+  assert.match(migration, /create table public\.technician_job_confirmations/);
+  assert.match(migration, /security definer/);
+  assert.match(proxy, /technician-confirm/);
+});
+
+test("پنل کاربری تغییر ایمیل و رمز و تصویر پروفایل را پشتیبانی می‌کند", async () => {
+  const page = await read("app/profile/page.tsx");
+  const view = await read("components/profile-settings-view.tsx");
+  const avatarApi = await read("app/api/profile/avatar/route.ts");
+  const migration = await read("supabase/migrations/202608180011_profile_avatars.sql");
+  assert.match(page, /ProfileSettingsView/);
+  assert.match(view, /auth\.updateUser\(\{ email/);
+  assert.match(view, /auth\.updateUser\(\{ password/);
+  assert.match(view, /type="file"/);
+  assert.match(avatarApi, /storage\.from\("profile-avatars"\)\.upload/);
+  assert.match(migration, /'profile-avatars'/);
+});
+
+test("پروژه اندروید MinePlus امن و آماده Android Studio است", async () => {
+  const manifest = await read("android/app/src/main/AndroidManifest.xml");
+  const activity = await read("android/app/src/main/java/app/mineplus/MainActivity.java");
+  const gradle = await read("android/app/build.gradle.kts");
+  assert.match(manifest, /android:usesCleartextTraffic="false"/);
+  assert.match(manifest, /android:name="android\.permission\.INTERNET"/);
+  assert.match(activity, /https:\/\/list-mine\.vercel\.app\/dashboard/);
+  assert.match(activity, /onShowFileChooser/);
+  assert.match(activity, /setMixedContentMode\(WebSettings\.MIXED_CONTENT_NEVER_ALLOW\)/);
+  assert.match(gradle, /applicationId = "app\.mineplus"/);
+  assert.match(gradle, /isMinifyEnabled = true/);
 });
 
 test("مرحله سوم مخارج اختیاری و فاکتور تصویری را ذخیره می‌کند", async () => {

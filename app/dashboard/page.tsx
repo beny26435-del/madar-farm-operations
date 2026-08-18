@@ -14,7 +14,7 @@ export default async function DashboardPage() {
   const [{ data: reports }, { data: employees }, { data: tasks }] = await Promise.all([
     supabase.from("daily_reports").select("id, employee_id, report_date, work_summary, status, submitted_at").order("report_date", { ascending: false }).order("submitted_at", { ascending: false }).limit(50),
     supabase.from("employees").select("id, full_name"),
-    supabase.from("daily_tasks").select("id, title, task_date, created_by, completed_by, completed_at, created_at").eq("task_date", today).order("created_at"),
+    supabase.from("daily_tasks").select("id, title, task_date, created_by, completed_by, completed_at, created_at").eq("task_date", today).is("completed_at", null).order("created_at"),
   ]);
   const names = new Map((employees ?? []).map((employee) => [employee.id, employee.full_name]));
   const items = (reports ?? []).map((report) => ({ ...report, employeeName: names.get(report.employee_id) ?? viewer.displayName }));

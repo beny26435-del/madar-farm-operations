@@ -11,6 +11,7 @@ export type Permission =
   | "employees:manage"
   | "customers:view"
   | "customers:manage"
+  | "technician-jobs:manage"
   | "activity:view"
   | "settings:manage";
 
@@ -23,14 +24,14 @@ export const roleLabels: Record<AppRole, string> = {
 const permissions: Record<AppRole, ReadonlySet<Permission>> = {
   admin: new Set<Permission>([
     "dashboard:view", "daily-report:write", "maintenance-report:write",
-    "reports:review", "employees:view", "employees:manage", "customers:view", "customers:manage", "activity:view", "settings:manage",
+    "reports:review", "employees:view", "employees:manage", "customers:view", "customers:manage", "technician-jobs:manage", "activity:view", "settings:manage",
   ]),
   manager: new Set<Permission>([
     "dashboard:view", "daily-report:write", "maintenance-report:write",
-    "employees:view", "employees:manage", "customers:view", "customers:manage", "activity:view",
+    "employees:view", "employees:manage", "customers:view", "customers:manage", "technician-jobs:manage", "activity:view",
   ]),
   employee: new Set<Permission>([
-    "dashboard:view", "daily-report:write", "maintenance-report:write",
+    "dashboard:view", "daily-report:write", "maintenance-report:write", "technician-jobs:manage",
   ]),
 };
 
