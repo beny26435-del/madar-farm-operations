@@ -185,6 +185,7 @@ test("PWA روی Android و iOS نصب‌پذیر و دارای fallback آفل�
   const worker = await read("public/sw.js");
   const proxy = await read("proxy.ts");
   assert.match(layout, /appleWebApp/);
+  assert.match(layout, /apple-mobile-web-app-capable/);
   assert.match(layout, /apple-touch-icon\.png/);
   assert.match(manifest, /mineplus-maskable-512\.png/);
   assert.match(registration, /serviceWorker\.register\("\/sw\.js"/);

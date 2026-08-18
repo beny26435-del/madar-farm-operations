@@ -19,6 +19,7 @@ export const metadata: Metadata = {
     statusBarStyle: "black-translucent",
     title: "MinePlus",
   },
+  other: { "apple-mobile-web-app-capable": "yes" },
   formatDetection: { telephone: false },
   openGraph: {
     title: "مدار عملیات | مدیریت فارم",
