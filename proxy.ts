@@ -2,7 +2,7 @@ import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import type { Database } from "@/types/database";
 
-const publicPaths = new Set(["/login"]);
+const publicPaths = new Set(["/login", "/offline"]);
 
 function isPublicPath(pathname: string) {
   return publicPaths.has(pathname) || pathname.startsWith("/confirm/") || pathname.startsWith("/api/confirmations/") || pathname.startsWith("/technician-confirm/") || pathname.startsWith("/api/technician-confirmations/");
@@ -70,5 +70,5 @@ export async function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/((?!_next/static|_next/image|favicon.ico|favicon.svg|og.png|manifest.webmanifest).*)"],
+  matcher: ["/((?!_next/static|_next/image|favicon.ico|favicon.svg|og.png|manifest.webmanifest|sw.js|mineplus-icon.svg|mineplus-maskable.svg|icons/).*)"],
 };

@@ -8,7 +8,7 @@ const read = (path) => readFile(new URL(path, root), "utf8");
 
 test("خروجی Next.js همه مسیرهای اصلی را دارد", async () => {
   const manifest = JSON.parse(await read(".next/server/app-paths-manifest.json"));
-  for (const route of ["/login/page", "/dashboard/page", "/daily-reports/page", "/daily-tasks/page", "/maintenance/page", "/maintenance/new/page", "/employees/page", "/employees/new/page", "/customers/page", "/customers/new/page", "/customers/[id]/page", "/technicians/page", "/profile/page", "/reports/page", "/activity/page", "/confirm/[token]/page", "/technician-confirm/[token]/page", "/api/users/route", "/api/daily-reports/route", "/api/daily-tasks/route", "/api/maintenance-intakes/route", "/api/customers/route", "/api/customers/[id]/items/route", "/api/customers/[id]/items/[itemId]/route", "/api/customers/[id]/items/[itemId]/confirmation/route", "/api/confirmations/[token]/route", "/api/technician-jobs/route", "/api/technician-jobs/[id]/confirmation/route", "/api/technician-confirmations/[token]/route", "/api/profile/avatar/route", "/api/reports/[type]/[id]/review/route"]) {
+  for (const route of ["/login/page", "/offline/page", "/dashboard/page", "/daily-reports/page", "/daily-tasks/page", "/maintenance/page", "/maintenance/new/page", "/employees/page", "/employees/new/page", "/customers/page", "/customers/new/page", "/customers/[id]/page", "/technicians/page", "/profile/page", "/reports/page", "/activity/page", "/confirm/[token]/page", "/technician-confirm/[token]/page", "/api/users/route", "/api/daily-reports/route", "/api/daily-tasks/route", "/api/maintenance-intakes/route", "/api/customers/route", "/api/customers/[id]/items/route", "/api/customers/[id]/items/[itemId]/route", "/api/customers/[id]/items/[itemId]/confirmation/route", "/api/confirmations/[token]/route", "/api/technician-jobs/route", "/api/technician-jobs/[id]/confirmation/route", "/api/technician-confirmations/[token]/route", "/api/profile/avatar/route", "/api/reports/[type]/[id]/review/route"]) {
     assert.ok(manifest[route], `missing ${route}`);
   }
 });
@@ -142,6 +142,16 @@ test("گردش دستگاه با تعمیرکار دو لینک تأیید ام�
   assert.match(proxy, /technician-confirm/);
 });
 
+test("ارجاع‌های تعمیرکار برای ثبت‌کننده خصوصی و برای میلاد کامل است", async () => {
+  const page = await read("app/technicians/page.tsx");
+  const confirmationApi = await read("app/api/technician-jobs/[id]/confirmation/route.ts");
+  const migration = await read("supabase/migrations/202608180012_private_technician_jobs.sql");
+  assert.match(page, /viewer\.role !== "admin"/);
+  assert.match(page, /eq\("created_by", viewer\.id\)/);
+  assert.match(confirmationApi, /job\.created_by !== actorId/);
+  assert.match(migration, /created_by = auth\.uid\(\) or public\.current_app_role\(\) = 'admin'/);
+});
+
 test("پنل کاربری تغییر ایمیل و رمز و تصویر پروفایل را پشتیبانی می‌کند", async () => {
   const page = await read("app/profile/page.tsx");
   const view = await read("components/profile-settings-view.tsx");
@@ -166,6 +176,22 @@ test("پروژه اندروید MinePlus امن و آماده Android Studio ا�
   assert.match(activity, /setMixedContentMode\(WebSettings\.MIXED_CONTENT_NEVER_ALLOW\)/);
   assert.match(gradle, /applicationId = "app\.mineplus"/);
   assert.match(gradle, /isMinifyEnabled = true/);
+});
+
+test("PWA روی Android و iOS نصب‌پذیر و دارای fallback آفلاین است", async () => {
+  const layout = await read("app/layout.tsx");
+  const manifest = await read("app/manifest.ts");
+  const registration = await read("components/pwa-registration.tsx");
+  const worker = await read("public/sw.js");
+  const proxy = await read("proxy.ts");
+  assert.match(layout, /appleWebApp/);
+  assert.match(layout, /apple-touch-icon\.png/);
+  assert.match(manifest, /mineplus-maskable-512\.png/);
+  assert.match(registration, /serviceWorker\.register\("\/sw\.js"/);
+  assert.match(worker, /request\.mode === "navigate"/);
+  assert.match(worker, /url\.pathname\.startsWith\("\/api\/"\)/);
+  assert.match(proxy, /"\/offline"/);
+  assert.match(proxy, /sw\.js/);
 });
 
 test("مرحله سوم مخارج اختیاری و فاکتور تصویری را ذخیره می‌کند", async () => {

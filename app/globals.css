@@ -1,7 +1,7 @@
 @import "tailwindcss";
 
 :root {
-  --mineplus-style-release: 2026081802;
+  --mineplus-style-release: 2026081803;
   --background: #f4f5f3;
   --surface: #ffffff;
   --surface-soft: #f8f9f7;
@@ -730,6 +730,15 @@ button { cursor: pointer; }
 .profile-setting-card h2 { margin: 0 0 3px; font-size: 14px; }
 .profile-setting-card header p { margin: 0; color: var(--muted-foreground); font-size: 9px; }
 .profile-setting-card > button { justify-self: end; }
+
+/* PWA offline fallback */
+.offline-page { min-height: 100svh; padding: 24px; background: radial-gradient(circle at 50% 0,#e6edd8 0,transparent 42%),var(--background); display: grid; place-items: center; }
+.offline-card { width: min(100%,430px); padding: 38px 30px; text-align: center; display: grid; justify-items: center; }
+.offline-card > span { width: 58px; height: 58px; margin-bottom: 14px; border-radius: 17px; color: #58705f; background: #e8eee8; display: grid; place-items: center; }
+.offline-card > span svg { width: 26px; }
+.offline-card small { color: #708178; direction: ltr; font-weight: 750; }
+.offline-card h1 { margin: 8px 0; font-size: 22px; }
+.offline-card p { margin: 0 0 22px; color: var(--muted-foreground); font-size: 12px; line-height: 1.9; }
 
 /* Customers */
 .customer-summary-strip { margin-bottom: 14px; display: grid; grid-template-columns: repeat(3,1fr); border: 1px solid var(--border); border-radius: 14px; background: #fff; }

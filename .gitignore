@@ -45,6 +45,7 @@ yarn-error.log*
 /android/.gradle/
 /android/.idea/
 /android/local.properties
+/android/releases/
 /android/**/build/
 /android/captures/
 *.jks

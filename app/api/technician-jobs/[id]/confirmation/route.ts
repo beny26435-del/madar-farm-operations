@@ -15,13 +15,14 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
   const actorId = claimsData?.claims?.sub;
   if (!actorId) return NextResponse.json({ message: "نشست معتبر نیست." }, { status: 401 });
   const admin = createAdminClient();
-  const { data: actor } = await admin.from("profiles").select("is_active").eq("id", actorId).maybeSingle();
+  const { data: actor } = await admin.from("profiles").select("is_active, role").eq("id", actorId).maybeSingle();
   if (!actor?.is_active) return NextResponse.json({ message: "اجازه ساخت لینک را ندارید." }, { status: 403 });
   const parsed = schema.safeParse(await request.json().catch(() => null));
   if (!parsed.success) return NextResponse.json({ message: "نوع تأیید معتبر نیست." }, { status: 400 });
 
-  const { data: job } = await admin.from("technician_jobs").select("id, technician_name, item_name, status").eq("id", id).maybeSingle();
+  const { data: job } = await admin.from("technician_jobs").select("id, technician_name, item_name, status, created_by").eq("id", id).maybeSingle();
   if (!job) return NextResponse.json({ message: "ارجاع پیدا نشد." }, { status: 404 });
+  if (actor.role !== "admin" && job.created_by !== actorId) return NextResponse.json({ message: "فقط ثبت‌کننده این ارجاع یا میلاد می‌تواند لینک آن را بسازد." }, { status: 403 });
   const expectedStatus = parsed.data.type === "handover" ? "awaiting_handover" : "with_technician";
   if (job.status !== expectedStatus && !(parsed.data.type === "return" && job.status === "awaiting_return")) {
     return NextResponse.json({ message: parsed.data.type === "handover" ? "تحویل این دستگاه قبلاً تأیید شده است." : "امکان ساخت لینک بازگشت در این وضعیت وجود ندارد." }, { status: 409 });
