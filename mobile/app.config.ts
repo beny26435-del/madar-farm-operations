@@ -17,7 +17,7 @@ export default ({ config }: ConfigContext): ExpoConfig => {
     icon: "./assets/images/icon.png",
     scheme: "mineplus",
     userInterfaceStyle: "light",
-    runtimeVersion: { policy: "appVersion" },
+    runtimeVersion: "2.1.0",
     updates: {
       enabled: true,
       checkAutomatically: "ON_LOAD",
