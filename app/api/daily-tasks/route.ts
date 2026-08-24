@@ -45,8 +45,14 @@ export async function GET(request: Request) {
     if (error) return NextResponse.json({ message: "دریافت کارهای روزانه انجام نشد." }, { status: 500 });
     return NextResponse.json({ tasks: tasks ?? [], count: count ?? 0, page, pageSize });
   }
-  const { data: tasks, error } = await actor.admin.from("daily_tasks").select("id, title, task_date, created_by, completed_by, completed_at, created_at").eq("task_date", tehranDate()).is("completed_at", null).order("created_at");
-  if (error) return NextResponse.json({ message: "دریافت کارهای امروز انجام نشد." }, { status: 500 });
+  const { data: tasks, error } = await actor.admin
+    .from("daily_tasks")
+    .select("id, title, task_date, created_by, completed_by, completed_at, created_at")
+    .is("completed_at", null)
+    .order("task_date", { ascending: false })
+    .order("created_at", { ascending: false })
+    .limit(50);
+  if (error) return NextResponse.json({ message: "دریافت کارهای باقی‌مانده انجام نشد." }, { status: 500 });
   return NextResponse.json({ tasks: tasks ?? [] });
 }
 

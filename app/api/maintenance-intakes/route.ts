@@ -21,6 +21,16 @@ const intakeSchema = z.object({
   }
 });
 
+const photoExtensions = new Map([
+  ["image/jpeg", "jpg"], ["image/png", "png"], ["image/webp", "webp"],
+  ["image/heic", "heic"], ["image/heif", "heif"],
+]);
+
+function parseJson(value: FormDataEntryValue | null) {
+  if (typeof value !== "string") return null;
+  try { return JSON.parse(value) as unknown; } catch { return null; }
+}
+
 function normalizePhone(value: string) {
   return value.replace(/[۰-۹]/g, (digit) => String("۰۱۲۳۴۵۶۷۸۹".indexOf(digit))).replace(/[\s-]/g, "");
 }
@@ -31,8 +41,20 @@ export async function POST(request: Request) {
   const actorId = claimsData?.claims?.sub;
   if (!actorId) return NextResponse.json({ message: "نشست معتبر نیست." }, { status: 401 });
 
-  const parsed = intakeSchema.safeParse(await request.json().catch(() => null));
+  const isMultipart = request.headers.get("content-type")?.includes("multipart/form-data");
+  const formData = isMultipart ? await request.formData().catch(() => null) : null;
+  if (isMultipart && !formData) return NextResponse.json({ message: "اطلاعات تعمیرات قابل خواندن نیست." }, { status: 400 });
+  const parsed = intakeSchema.safeParse(formData ? parseJson(formData.get("intake")) : await request.json().catch(() => null));
   if (!parsed.success) return NextResponse.json({ message: parsed.error.issues[0]?.message ?? "اطلاعات فرم کامل نیست." }, { status: 400 });
+  const photos = parsed.data.items.map((_, index) => {
+    const value = formData?.get(`device-photo-${index}`);
+    return value instanceof File && value.size > 0 ? value : null;
+  });
+  for (const photo of photos) {
+    if (photo && (!photoExtensions.has(photo.type) || photo.size > 8 * 1024 * 1024)) {
+      return NextResponse.json({ message: "عکس دستگاه باید JPG، PNG، WEBP یا HEIC و حداکثر ۸ مگابایت باشد." }, { status: 400 });
+    }
+  }
 
   const admin = createAdminClient();
   const { data: actor } = await admin.from("profiles").select("role, is_active").eq("id", actorId).maybeSingle();
@@ -69,18 +91,40 @@ export async function POST(request: Request) {
     return NextResponse.json({ message: "ثبت دریافت تعمیرات انجام نشد." }, { status: 500 });
   }
 
-  const { error: itemsError } = await admin.from("customer_repair_items").insert(parsed.data.items.map((item) => ({
-    customer_id: customerId,
-    intake_id: intake.id,
-    item_name: item.itemName,
-    quantity: item.quantity,
-    details: null,
-    created_by: actorId,
-  })));
-  if (itemsError) {
-    await admin.from("customer_repair_intakes").delete().eq("id", intake.id);
-    if (createdCustomerId) await admin.from("customers").delete().eq("id", createdCustomerId);
-    return NextResponse.json({ message: "ثبت وسایل انجام نشد." }, { status: 500 });
+  const uploadedPaths: string[] = [];
+  for (let index = 0; index < parsed.data.items.length; index += 1) {
+    const item = parsed.data.items[index];
+    const photo = photos[index];
+    const { data: savedItem, error: itemError } = await admin.from("customer_repair_items").insert({
+      customer_id: customerId, intake_id: intake.id, item_name: item.itemName,
+      quantity: item.quantity, details: null, created_by: actorId,
+    }).select("id").single();
+    if (itemError) {
+      if (uploadedPaths.length) await admin.storage.from("repair-item-photos").remove(uploadedPaths);
+      await admin.from("customer_repair_intakes").delete().eq("id", intake.id);
+      if (createdCustomerId) await admin.from("customers").delete().eq("id", createdCustomerId);
+      return NextResponse.json({ message: "ثبت وسایل انجام نشد." }, { status: 500 });
+    }
+    if (photo) {
+      const photoPath = `${actorId}/${intake.id}/${savedItem.id}-${crypto.randomUUID()}.${photoExtensions.get(photo.type)}`;
+      const { error: uploadError } = await admin.storage.from("repair-item-photos").upload(photoPath, photo, { contentType: photo.type, upsert: false });
+      if (uploadError) {
+        if (uploadedPaths.length) await admin.storage.from("repair-item-photos").remove(uploadedPaths);
+        await admin.from("customer_repair_intakes").delete().eq("id", intake.id);
+        if (createdCustomerId) await admin.from("customers").delete().eq("id", createdCustomerId);
+        return NextResponse.json({ message: "بارگذاری عکس دستگاه انجام نشد." }, { status: 500 });
+      }
+      uploadedPaths.push(photoPath);
+      const { error: photoUpdateError } = await admin.from("customer_repair_items").update({
+        photo_path: photoPath, photo_original_name: photo.name, photo_mime_type: photo.type, photo_size_bytes: photo.size,
+      }).eq("id", savedItem.id);
+      if (photoUpdateError) {
+        await admin.storage.from("repair-item-photos").remove(uploadedPaths);
+        await admin.from("customer_repair_intakes").delete().eq("id", intake.id);
+        if (createdCustomerId) await admin.from("customers").delete().eq("id", createdCustomerId);
+        return NextResponse.json({ message: "ذخیره مشخصات عکس دستگاه انجام نشد." }, { status: 500 });
+      }
+    }
   }
 
   let confirmationUrl: string | null = null;
@@ -93,5 +137,6 @@ export async function POST(request: Request) {
 
   const totalQuantity = parsed.data.items.reduce((sum, item) => sum + item.quantity, 0);
   await recordActivity({ actorId, action: "repair_intake.created", entityType: "repair_intake", entityId: intake.id, metadata: { customer_name: customerName, item_count: parsed.data.items.length, total_quantity: totalQuantity } });
-  return NextResponse.json({ id: intake.id, customerId, confirmationUrl, message: confirmationUrl ? "تعمیرات ثبت شد و لینک تأیید آماده است." : "تعمیرات ثبت شد؛ لینک تأیید را بعداً دوباره بسازید." }, { status: 201 });
+  const savedLabel = photos.some(Boolean) ? "تعمیرات و عکس‌های دستگاه" : "تعمیرات";
+  return NextResponse.json({ id: intake.id, customerId, confirmationUrl, message: confirmationUrl ? `${savedLabel} ثبت شد؛ لینک تأیید آماده است.` : `${savedLabel} ثبت شد؛ لینک تأیید را بعداً دوباره بسازید.` }, { status: 201 });
 }

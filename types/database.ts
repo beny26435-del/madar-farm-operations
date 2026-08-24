@@ -52,9 +52,9 @@ export type Database = {
         { full_name?: string; phone?: string | null }
       >;
       customer_repair_items: Table<
-        { id: string; customer_id: string; intake_id: string | null; item_name: string; quantity: number; details: string | null; status: "received" | "delivered"; received_at: string; delivered_at: string | null; created_by: string; created_at: string; updated_at: string },
-        { customer_id: string; intake_id?: string | null; item_name: string; quantity?: number; details?: string | null; status?: "received" | "delivered"; received_at?: string; delivered_at?: string | null; created_by: string },
-        { intake_id?: string | null; item_name?: string; quantity?: number; details?: string | null; status?: "received" | "delivered"; delivered_at?: string | null }
+        { id: string; customer_id: string; intake_id: string | null; item_name: string; quantity: number; details: string | null; photo_path: string | null; photo_original_name: string | null; photo_mime_type: string | null; photo_size_bytes: number | null; status: "received" | "delivered"; received_at: string; delivered_at: string | null; created_by: string; created_at: string; updated_at: string },
+        { customer_id: string; intake_id?: string | null; item_name: string; quantity?: number; details?: string | null; photo_path?: string | null; photo_original_name?: string | null; photo_mime_type?: string | null; photo_size_bytes?: number | null; status?: "received" | "delivered"; received_at?: string; delivered_at?: string | null; created_by: string },
+        { intake_id?: string | null; item_name?: string; quantity?: number; details?: string | null; photo_path?: string | null; photo_original_name?: string | null; photo_mime_type?: string | null; photo_size_bytes?: number | null; status?: "received" | "delivered"; delivered_at?: string | null }
       >;
       customer_repair_intakes: Table<
         { id: string; customer_id: string; created_by: string; received_at: string; created_at: string },

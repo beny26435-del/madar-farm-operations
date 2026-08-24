@@ -20,7 +20,7 @@ export default async function MaintenancePage() {
   const customerIds = [...new Set((intakeRows ?? []).map((intake) => intake.customer_id))];
   const [{ data: customers }, { data: items }, { data: confirmations }] = await Promise.all([
     customerIds.length ? admin.from("customers").select("id, full_name").in("id", customerIds) : Promise.resolve({ data: [] }),
-    intakeIds.length ? admin.from("customer_repair_items").select("intake_id, item_name, quantity, status").in("intake_id", intakeIds).order("created_at") : Promise.resolve({ data: [] }),
+    intakeIds.length ? admin.from("customer_repair_items").select("intake_id, item_name, quantity, photo_path, status").in("intake_id", intakeIds).order("created_at") : Promise.resolve({ data: [] }),
     intakeIds.length ? admin.from("customer_handover_confirmations").select("intake_id, confirmed_at").eq("type", "intake").in("intake_id", intakeIds) : Promise.resolve({ data: [] }),
   ]);
   const names = new Map((customers ?? []).map((customer) => [customer.id, customer.full_name]));
@@ -31,7 +31,7 @@ export default async function MaintenancePage() {
     customerName: names.get(intake.customer_id) ?? "مشتری",
     receivedAt: intake.received_at,
     confirmedAt: confirmed.get(intake.id) ?? null,
-    items: (items ?? []).filter((item) => item.intake_id === intake.id).map((item) => ({ name: item.item_name, quantity: item.quantity, status: item.status })),
+    items: (items ?? []).filter((item) => item.intake_id === intake.id).map((item) => ({ name: item.item_name, quantity: item.quantity, status: item.status, photoUrl: item.photo_path ? admin.storage.from("repair-item-photos").getPublicUrl(item.photo_path).data.publicUrl : null })),
   }));
   return <AppShell viewer={viewer}><MaintenanceIntakeListView intakes={result} loadError={Boolean(error)} canViewCustomers={hasPermission(viewer.role, "customers:view")} /></AppShell>;
 }

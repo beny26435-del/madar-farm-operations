@@ -16,7 +16,7 @@ export default async function CustomerPage({ params }: { params: Promise<{ id: s
   const supabase = await createClient();
   const [{ data: customer }, { data: items, error }] = await Promise.all([
     supabase.from("customers").select("id, full_name, phone, created_at").eq("id", id).maybeSingle(),
-    supabase.from("customer_repair_items").select("id, customer_id, intake_id, item_name, quantity, status, received_at, delivered_at").eq("customer_id", id).order("received_at", { ascending: false }),
+    supabase.from("customer_repair_items").select("id, customer_id, intake_id, item_name, quantity, photo_path, status, received_at, delivered_at").eq("customer_id", id).order("received_at", { ascending: false }),
   ]);
   if (!customer) notFound();
   const itemIds = (items ?? []).map((item) => item.id);
@@ -25,5 +25,6 @@ export default async function CustomerPage({ params }: { params: Promise<{ id: s
     itemIds.length ? supabase.from("customer_handover_confirmations").select("id, item_id, intake_id, type, expires_at, confirmed_at").in("item_id", itemIds) : Promise.resolve({ data: [], error: null }),
     intakeIds.length ? supabase.from("customer_handover_confirmations").select("id, item_id, intake_id, type, expires_at, confirmed_at").in("intake_id", intakeIds) : Promise.resolve({ data: [], error: null }),
   ]);
-  return <AppShell viewer={viewer}><CustomerDetailView customer={customer} items={items ?? []} confirmations={[...(itemConfirmations.data ?? []), ...(intakeConfirmations.data ?? [])]} loadError={Boolean(error || itemConfirmations.error || intakeConfirmations.error)} /></AppShell>;
+  const itemsWithPhotos = (items ?? []).map((item) => ({ ...item, photoUrl: item.photo_path ? supabase.storage.from("repair-item-photos").getPublicUrl(item.photo_path).data.publicUrl : null }));
+  return <AppShell viewer={viewer}><CustomerDetailView customer={customer} items={itemsWithPhotos} confirmations={[...(itemConfirmations.data ?? []), ...(intakeConfirmations.data ?? [])]} loadError={Boolean(error || itemConfirmations.error || intakeConfirmations.error)} /></AppShell>;
 }

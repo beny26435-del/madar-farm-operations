@@ -1,11 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import { CheckCircle2, ChevronDown, Clipboard, ContactRound, PackagePlus, Plus, Send, Trash2, Wrench } from "lucide-react";
+import Image from "next/image";
+import { CheckCircle2, ChevronDown, Clipboard, ContactRound, ImagePlus, PackagePlus, Plus, Send, Trash2, Wrench, X } from "lucide-react";
 import { useState } from "react";
 
 type Customer = { id: string; full_name: string; phone: string | null };
-type ItemInput = { key: number; itemName: string; quantity: string };
+type ItemInput = { key: number; itemName: string; quantity: string; photo: File | null; previewUrl: string | null };
 type SavedIntake = { customerId: string; confirmationUrl: string | null; message: string };
 
 export function MaintenanceIntakeForm({ customers, canViewCustomers }: { customers: Customer[]; canViewCustomers: boolean }) {
@@ -13,7 +14,7 @@ export function MaintenanceIntakeForm({ customers, canViewCustomers }: { custome
   const [customerId, setCustomerId] = useState("");
   const [fullName, setFullName] = useState("");
   const [phone, setPhone] = useState("");
-  const [items, setItems] = useState<ItemInput[]>([{ key: 1, itemName: "", quantity: "" }]);
+  const [items, setItems] = useState<ItemInput[]>([{ key: 1, itemName: "", quantity: "", photo: null, previewUrl: null }]);
   const [nextKey, setNextKey] = useState(2);
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -26,13 +27,28 @@ export function MaintenanceIntakeForm({ customers, canViewCustomers }: { custome
   }
 
   function addItem() {
-    setItems((current) => [...current, { key: nextKey, itemName: "", quantity: "" }]);
+    setItems((current) => [...current, { key: nextKey, itemName: "", quantity: "", photo: null, previewUrl: null }]);
     setNextKey((value) => value + 1);
   }
 
   function removeItem(key: number) {
     if (items.length === 1) return;
     setItems((current) => current.filter((item) => item.key !== key));
+  }
+
+  function updatePhoto(key: number, photo: File | null) {
+    if (!photo) {
+      setItems((current) => current.map((item) => item.key === key ? { ...item, photo: null, previewUrl: null } : item));
+      return;
+    }
+    if (!["image/jpeg", "image/png", "image/webp", "image/heic", "image/heif"].includes(photo.type) || photo.size > 8 * 1024 * 1024) {
+      setError("عکس دستگاه باید JPG، PNG، WEBP یا HEIC و حداکثر ۸ مگابایت باشد.");
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => setItems((current) => current.map((item) => item.key === key ? { ...item, photo, previewUrl: typeof reader.result === "string" ? reader.result : null } : item));
+    reader.readAsDataURL(photo);
+    setError(null);
   }
 
   async function submit(event: React.FormEvent) {
@@ -44,11 +60,10 @@ export function MaintenanceIntakeForm({ customers, canViewCustomers }: { custome
     if (normalizedItems.some((item) => !Number.isInteger(item.quantity) || item.quantity < 1 || item.quantity > 999)) { setError("تعداد هر وسیله را درست وارد کنید."); return; }
     setPending(true); setError(null);
     try {
-      const response = await fetch("/api/maintenance-intakes", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ customerId: customerMode === "existing" ? customerId : null, newCustomer: customerMode === "new" ? { fullName, phone } : null, items: normalizedItems }),
-      });
+      const payload = new FormData();
+      payload.append("intake", JSON.stringify({ customerId: customerMode === "existing" ? customerId : null, newCustomer: customerMode === "new" ? { fullName, phone } : null, items: normalizedItems }));
+      items.forEach((item, index) => { if (item.photo) payload.append(`device-photo-${index}`, item.photo); });
+      const response = await fetch("/api/maintenance-intakes", { method: "POST", body: payload });
       const result = await response.json().catch(() => ({ message: "پاسخ سرور معتبر نیست." })) as SavedIntake & { message?: string };
       if (!response.ok) { setError(result.message ?? "ثبت تعمیرات انجام نشد."); return; }
       setSaved({ customerId: result.customerId, confirmationUrl: result.confirmationUrl, message: result.message ?? "تعمیرات ثبت شد." });
@@ -82,7 +97,7 @@ export function MaintenanceIntakeForm({ customers, canViewCustomers }: { custome
         {customerMode === "existing" ? <label className="field"><span className="field-label">مشتری</span><span className="input-wrap"><select className="select" autoComplete="off" value={customerId} onChange={(event) => { setCustomerId(event.target.value); setError(null); }}><option value="">مشتری را انتخاب کنید</option>{customers.map((customer) => <option value={customer.id} key={customer.id}>{customer.full_name}{customer.phone ? ` — ${customer.phone}` : ""}</option>)}</select><ChevronDown className="input-icon" /></span></label> : <div className="new-customer-fields"><label className="field"><span className="field-label">نام مشتری</span><input className="input" autoComplete="off" value={fullName} onChange={(event) => { setFullName(event.target.value); setError(null); }} /></label><label className="field"><span className="field-label">شماره تماس <span className="field-hint">اختیاری</span></span><input className="input" inputMode="tel" autoComplete="off" dir="ltr" value={phone} onChange={(event) => { setPhone(event.target.value); setError(null); }} /></label></div>}
       </div></section>
       <section className="surface intake-section"><header><span><PackagePlus /></span><div><h2>وسایل تحویل‌گرفته‌شده</h2><p>نام و تعداد هر وسیله را وارد کنید.</p></div><button className="button button-secondary" type="button" onClick={addItem}><Plus />افزودن وسیله</button></header><div className="intake-items">
-        {items.map((item, index) => <article className="intake-item-row" key={item.key}><span className="intake-item-number">{(index + 1).toLocaleString("fa-IR")}</span><label className="field"><span className="field-label">نام وسیله</span><input className="input" autoComplete="off" value={item.itemName} onChange={(event) => updateItem(item.key, "itemName", event.target.value)} /></label><label className="field quantity-field"><span className="field-label">تعداد</span><input className="input" inputMode="numeric" autoComplete="off" dir="ltr" value={item.quantity} onChange={(event) => updateItem(item.key, "quantity", event.target.value.replace(/[^0-9۰-۹]/g, ""))} /></label><button className="remove-intake-item" type="button" onClick={() => removeItem(item.key)} disabled={items.length === 1} aria-label="حذف وسیله"><Trash2 /></button></article>)}
+        {items.map((item, index) => <article className="intake-item-row" key={item.key}><span className="intake-item-number">{(index + 1).toLocaleString("fa-IR")}</span><label className="field"><span className="field-label">نام وسیله</span><input className="input" autoComplete="off" value={item.itemName} onChange={(event) => updateItem(item.key, "itemName", event.target.value)} /></label><label className="field quantity-field"><span className="field-label">تعداد</span><input className="input" inputMode="numeric" autoComplete="off" dir="ltr" value={item.quantity} onChange={(event) => updateItem(item.key, "quantity", event.target.value.replace(/[^0-9۰-۹]/g, ""))} /></label><button className="remove-intake-item" type="button" onClick={() => removeItem(item.key)} disabled={items.length === 1} aria-label="حذف وسیله"><Trash2 /></button><div className="device-photo-field">{item.previewUrl ? <div className="device-photo-preview"><Image src={item.previewUrl} alt="پیش‌نمایش عکس دستگاه" width={58} height={58} unoptimized /><div><strong>{item.photo?.name}</strong><small>عکس برای بارگذاری آماده است</small></div><button type="button" onClick={() => updatePhoto(item.key, null)} aria-label="حذف عکس"><X /></button></div> : <label className="device-photo-upload"><input type="file" accept="image/jpeg,image/png,image/webp,image/heic,image/heif" onChange={(event) => updatePhoto(item.key, event.target.files?.[0] ?? null)} /><ImagePlus /><span><strong>افزودن عکس دستگاه</strong><small>اختیاری · حداکثر ۸ مگابایت</small></span></label>}</div></article>)}
         <button className="add-intake-item" type="button" onClick={addItem}><Plus />افزودن وسیله دیگر</button>
       </div></section>
       {error && <p className="intake-form-error" role="alert">{error}</p>}

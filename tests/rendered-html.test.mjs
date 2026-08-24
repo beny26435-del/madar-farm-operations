@@ -82,6 +82,9 @@ test("لیست مشترک کارهای روزانه در داشبورد قابل
   const board = await read("components/daily-task-board.tsx");
   const api = await read("app/api/daily-tasks/route.ts");
   const migration = await read("supabase/migrations/202608180009_daily_report_collaborators_and_tasks.sql");
+  const mobileDashboard = await read("mobile/src/app/(tabs)/index.tsx");
+  const mobileTasks = await read("mobile/src/app/tasks.tsx");
+  const mobileApi = await read("mobile/src/lib/api.ts");
   assert.match(dashboardPage, /from\("daily_tasks"\)/);
   assert.match(dashboard, /DailyTaskBoard/);
   assert.match(board, /کارهای امروز/);
@@ -95,6 +98,12 @@ test("لیست مشترک کارهای روزانه در داشبورد قابل
   assert.match(migration, /daily_tasks_select/);
   assert.match(dashboardPage, /is\("completed_at", null\)/);
   assert.match(dashboard, /showCompleted=\{false\}/);
+  assert.match(mobileDashboard, /status=pending/);
+  assert.match(mobileTasks, /status=completed/);
+  assert.match(mobileTasks, /changeStatus/);
+  assert.doesNotMatch(api, /\.eq\("task_date", tehranDate\(\)\)/);
+  assert.match(mobileApi, /network\.isInternetReachable === false/);
+  assert.doesNotMatch(mobileApi, /!network\.isInternetReachable/);
 });
 
 test("آرشیو کارهای روزانه صفحه‌بندی شده و از داشبورد جدا است", async () => {
@@ -309,23 +318,33 @@ test("مشتری دریافت و تحویل وسیله را با لینک امن
   assert.match(proxy, /pathname\.startsWith\("\/confirm\/"\)/);
 });
 
-test("ثبت تعمیرات فقط مشتری، وسیله و تعداد را در یک پذیرش واقعی ذخیره می‌کند", async () => {
+test("ثبت تعمیرات مشتری، وسیله، تعداد و عکس اختیاری را در یک پذیرش واقعی ذخیره می‌کند", async () => {
   const page = await read("app/maintenance/new/page.tsx");
   const listPage = await read("app/maintenance/page.tsx");
   const form = await read("components/maintenance-intake-form.tsx");
   const api = await read("app/api/maintenance-intakes/route.ts");
   const migration = await read("supabase/migrations/202608090008_repair_intakes_and_quantities.sql");
+  const photoMigration = await read("supabase/migrations/202608240013_repair_item_photos.sql");
+  const mobile = await read("mobile/src/app/(tabs)/maintenance.tsx");
   assert.match(page, /MaintenanceIntakeForm/);
   assert.match(listPage, /from\("customer_repair_intakes"\)/);
   assert.match(form, /مشتری جدید/);
   assert.match(form, /نام وسیله/);
   assert.match(form, /تعداد/);
+  assert.match(form, /device-photo-/);
+  assert.match(form, /افزودن عکس دستگاه/);
   assert.doesNotMatch(form, /اقدام انجام‌شده|شرح فنی|شرح وضعیت/);
   assert.match(api, /from\("customer_repair_intakes"\)\.insert/);
   assert.match(api, /from\("customer_repair_items"\)\.insert/);
   assert.match(api, /intakeId: intake\.id/);
+  assert.match(api, /repair-item-photos/);
+  assert.match(api, /photo_path/);
   assert.match(migration, /create table public\.customer_repair_intakes/);
   assert.match(migration, /add column quantity integer/);
+  assert.match(photoMigration, /add column if not exists photo_path/);
+  assert.match(photoMigration, /'repair-item-photos'/);
+  assert.match(mobile, /pickPhoto/);
+  assert.match(mobile, /device-photo-/);
 });
 
 test("صف بررسی، تصمیم مدیر را در گزارش و تاریخچه ثبت می‌کند", async () => {
@@ -407,10 +426,17 @@ test("آپدیت داخل برنامه و Google Play هر دو پیکربندی
   const config = await read("mobile/app.config.ts");
   const gradle = await read("mobile/android/app/build.gradle");
   const activity = await read("mobile/android/app/src/main/java/app/mineplus/MainActivity.kt");
+  const manifest = await read("mobile/android/app/src/main/AndroidManifest.xml");
+  const eas = await read("mobile/eas.json");
   assert.match(ota, /checkForUpdateAsync/);
   assert.match(ota, /fetchUpdateAsync/);
   assert.match(ota, /reloadAsync/);
   assert.match(config, /runtimeVersion: \{ policy: "appVersion" \}/);
+  assert.match(config, /https:\/\/u\.expo\.dev\/\$\{projectId\}/);
+  assert.match(config, /46a67720-73c9-429e-b18c-6ca59182678c/);
+  assert.match(manifest, /expo\.modules\.updates\.ENABLED" android:value="true"/);
+  assert.match(manifest, /expo\.modules\.updates\.EXPO_UPDATE_URL/);
+  assert.match(eas, /"channel": "production"/);
   assert.match(gradle, /com\.google\.android\.play:app-update-ktx:2\.1\.0/);
   assert.match(activity, /AppUpdateManagerFactory/);
   assert.match(activity, /AppUpdateType\.IMMEDIATE/);

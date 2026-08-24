@@ -1,11 +1,12 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { CheckCircle2, ContactRound, Link2, Package, Plus, Search, Wrench } from "lucide-react";
 import { useState } from "react";
 import { EmptyState, ErrorState, StatusBadge } from "./ui";
 
-export type MaintenanceIntakeItem = { name: string; quantity: number; status: "received" | "delivered" };
+export type MaintenanceIntakeItem = { name: string; quantity: number; photoUrl: string | null; status: "received" | "delivered" };
 export type MaintenanceIntake = { id: string; customerId: string; customerName: string; receivedAt: string; confirmedAt: string | null; items: MaintenanceIntakeItem[] };
 
 function formatDate(value: string) {
@@ -26,7 +27,7 @@ export function MaintenanceIntakeListView({ intakes, loadError, canViewCustomers
     <section className="surface maintenance-panel"><div className="maintenance-toolbar"><label><Search /><input autoComplete="off" aria-label="جست‌وجوی تعمیرات" value={query} onChange={(event) => setQuery(event.target.value)} /></label></div>
       {loadError ? <ErrorState /> : visible.length === 0 ? <EmptyState title={query ? "نتیجه‌ای پیدا نشد" : "هنوز تعمیراتی ثبت نشده است"} description={query ? "عبارت جست‌وجو را تغییر دهید." : "با ثبت تعمیرات، موارد تحویل‌گرفته‌شده اینجا نمایش داده می‌شوند."} action={!query ? <Link className="button button-primary" href="/maintenance/new"><Plus />ثبت تعمیرات</Link> : undefined} /> : <div className="maintenance-intake-grid">{visible.map((intake) => {
         const active = intake.items.some((item) => item.status === "received");
-        const content = <><header><span><ContactRound /></span><div><strong>{intake.customerName}</strong><small>{formatDate(intake.receivedAt)}</small></div><StatusBadge tone={active ? "progress" : "approved"}>{active ? "در حال تعمیر" : "تحویل کامل"}</StatusBadge></header><div className="maintenance-card-items">{intake.items.map((item, index) => <span key={`${item.name}-${index}`}><Package /><strong>{item.name}</strong><em>{item.quantity.toLocaleString("fa-IR")} عدد</em>{item.status === "delivered" && <CheckCircle2 />}</span>)}</div><footer><span className={intake.confirmedAt ? "confirmed" : "waiting"}>{intake.confirmedAt ? <CheckCircle2 /> : <Link2 />}{intake.confirmedAt ? "تأییدشده توسط مشتری" : "منتظر تأیید مشتری"}</span><strong>{intake.items.reduce((sum, item) => sum + item.quantity, 0).toLocaleString("fa-IR")} وسیله</strong></footer></>;
+        const content = <><header><span><ContactRound /></span><div><strong>{intake.customerName}</strong><small>{formatDate(intake.receivedAt)}</small></div><StatusBadge tone={active ? "progress" : "approved"}>{active ? "در حال تعمیر" : "تحویل کامل"}</StatusBadge></header><div className="maintenance-card-items">{intake.items.map((item, index) => <span key={`${item.name}-${index}`}>{item.photoUrl ? <Image src={item.photoUrl} alt={`عکس ${item.name}`} width={34} height={34} unoptimized /> : <Package />}<strong>{item.name}</strong><em>{item.quantity.toLocaleString("fa-IR")} عدد</em>{item.status === "delivered" && <CheckCircle2 />}</span>)}</div><footer><span className={intake.confirmedAt ? "confirmed" : "waiting"}>{intake.confirmedAt ? <CheckCircle2 /> : <Link2 />}{intake.confirmedAt ? "تأییدشده توسط مشتری" : "منتظر تأیید مشتری"}</span><strong>{intake.items.reduce((sum, item) => sum + item.quantity, 0).toLocaleString("fa-IR")} وسیله</strong></footer></>;
         return canViewCustomers ? <Link className="maintenance-intake-card" href={`/customers/${intake.customerId}`} key={intake.id}>{content}</Link> : <article className="maintenance-intake-card" key={intake.id}>{content}</article>;
       })}</div>}
     </section>
