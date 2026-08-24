@@ -87,7 +87,7 @@ test("لیست مشترک کارهای روزانه در داشبورد قابل
   const mobileApi = await read("mobile/src/lib/api.ts");
   assert.match(dashboardPage, /from\("daily_tasks"\)/);
   assert.match(dashboard, /DailyTaskBoard/);
-  assert.match(board, /کارهای امروز/);
+  assert.match(board, /کارهای باز/);
   assert.match(board, /در حال انجام/);
   assert.match(board, /انجام‌شده/);
   assert.match(board, /method: "POST"/);
@@ -97,6 +97,7 @@ test("لیست مشترک کارهای روزانه در داشبورد قابل
   assert.match(migration, /create table public\.daily_tasks/);
   assert.match(migration, /daily_tasks_select/);
   assert.match(dashboardPage, /is\("completed_at", null\)/);
+  assert.doesNotMatch(dashboardPage, /eq\("task_date", today\)/);
   assert.match(dashboard, /showCompleted=\{false\}/);
   assert.match(mobileDashboard, /status=pending/);
   assert.match(mobileTasks, /status=completed/);
@@ -431,7 +432,7 @@ test("آپدیت داخل برنامه و Google Play هر دو پیکربندی
   assert.match(ota, /checkForUpdateAsync/);
   assert.match(ota, /fetchUpdateAsync/);
   assert.match(ota, /reloadAsync/);
-  assert.match(config, /runtimeVersion: \{ policy: "appVersion" \}/);
+  assert.match(config, /runtimeVersion: "2\.1\.0"/);
   assert.match(config, /https:\/\/u\.expo\.dev\/\$\{projectId\}/);
   assert.match(config, /46a67720-73c9-429e-b18c-6ca59182678c/);
   assert.match(manifest, /expo\.modules\.updates\.ENABLED" android:value="true"/);
