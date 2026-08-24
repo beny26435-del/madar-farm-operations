@@ -6,7 +6,6 @@
       "distribution": "internal",
       "channel": "production",
       "environment": "production",
-      "autoIncrement": true,
       "android": { "buildType": "apk" }
     }
   },
