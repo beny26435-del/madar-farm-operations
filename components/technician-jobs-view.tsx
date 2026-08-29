@@ -9,6 +9,8 @@ type DeviceOption = { id: string; itemName: string; customerName: string; availa
 
 const statusLabel = { awaiting_handover: "منتظر تحویل", with_technician: "نزد تعمیرکار", awaiting_return: "منتظر بازگشت", returned: "بازگشته" } as const;
 const statusTone = { awaiting_handover: "submitted", with_technician: "progress", awaiting_return: "review", returned: "approved" } as const;
+const technicianOptions = ["مهندس صادقی", "مهندس افشار", "مهندس کاکاوند", "مهندس احمدی"] as const;
+const customTechnicianValue = "other";
 
 function formatDate(value: string) {
   return new Intl.DateTimeFormat("fa-IR", { year: "numeric", month: "long", day: "numeric", hour: "2-digit", minute: "2-digit" }).format(new Date(value));
@@ -19,6 +21,7 @@ export function TechnicianJobsView({ initialJobs, devices: initialDevices, loadE
   const [devices, setDevices] = useState(initialDevices);
   const [query, setQuery] = useState("");
   const [formOpen, setFormOpen] = useState(false);
+  const [technicianSelection, setTechnicianSelection] = useState("");
   const [technicianName, setTechnicianName] = useState("");
   const [repairItemId, setRepairItemId] = useState("");
   const [quantity, setQuantity] = useState("1");
@@ -40,7 +43,7 @@ export function TechnicianJobsView({ initialJobs, devices: initialDevices, loadE
       if (!response.ok || !result.job) { setFormError(result.message ?? "ثبت ارجاع انجام نشد."); return; }
       setJobs((current) => [result.job!, ...current]);
       setDevices((current) => current.map((device) => device.id === repairItemId ? { ...device, availableQuantity: device.availableQuantity - result.job!.quantity } : device).filter((device) => device.availableQuantity > 0));
-      setTechnicianName(""); setRepairItemId(""); setQuantity("1"); setFormOpen(false);
+      setTechnicianSelection(""); setTechnicianName(""); setRepairItemId(""); setQuantity("1"); setFormOpen(false);
     } catch { setFormError("ارتباط با سامانه برقرار نشد."); } finally { setSaving(false); }
   }
 
@@ -75,7 +78,7 @@ export function TechnicianJobsView({ initialJobs, devices: initialDevices, loadE
     </section>
   </div>
 
-  <Dialog open={formOpen} onClose={() => !saving && setFormOpen(false)} title="ارجاع دستگاه به تعمیرکار" description="دستگاه، تعداد و نام تعمیرکار را ثبت کنید." mark={<HardHat />}><form className="technician-create-form" onSubmit={createJob}><label className="field"><span className="field-label">دستگاه</span><span className="input-wrap"><select className="select" autoComplete="off" value={repairItemId} onChange={(event) => { setRepairItemId(event.target.value); setQuantity("1"); }} required><option value="">انتخاب دستگاه</option>{devices.map((device) => <option key={device.id} value={device.id}>{device.itemName} · {device.customerName} · {device.availableQuantity.toLocaleString("fa-IR")} عدد آزاد</option>)}</select></span></label><label className="field"><span className="field-label">نام تعمیرکار</span><input className="input" autoComplete="off" value={technicianName} onChange={(event) => setTechnicianName(event.target.value)} required /></label><label className="field"><span className="field-label">تعداد</span><input className="input" type="number" inputMode="numeric" min="1" max={selectedDevice?.availableQuantity ?? 999} autoComplete="off" value={quantity} onChange={(event) => setQuantity(event.target.value)} required /></label>{formError && <p className="technician-form-error" role="alert">{formError}</p>}<div className="dialog-actions"><button type="button" className="button button-ghost" onClick={() => setFormOpen(false)} disabled={saving}>انصراف</button><button className="button button-primary" disabled={saving || !devices.length}>{saving ? <LoaderCircle className="spinning" /> : <Plus />}{saving ? "در حال ثبت..." : "ثبت ارجاع"}</button></div></form></Dialog>
+  <Dialog open={formOpen} onClose={() => !saving && setFormOpen(false)} title="ارجاع دستگاه به تعمیرکار" description="دستگاه، تعمیرکار و تعداد را مشخص کنید." mark={<HardHat />}><form className="technician-create-form" onSubmit={createJob}><label className="field"><span className="field-label">دستگاه</span><span className="input-wrap"><select className="select" autoComplete="off" value={repairItemId} onChange={(event) => { setRepairItemId(event.target.value); setQuantity("1"); }} required><option value="">انتخاب دستگاه</option>{devices.map((device) => <option key={device.id} value={device.id}>{device.itemName} · {device.customerName} · {device.availableQuantity.toLocaleString("fa-IR")} عدد آزاد</option>)}</select></span></label><label className="field"><span className="field-label">تعمیرکار</span><span className="input-wrap"><select className="select" autoComplete="off" value={technicianSelection} onChange={(event) => { const value = event.target.value; setTechnicianSelection(value); setTechnicianName(value === customTechnicianValue ? "" : value); }} required><option value="">انتخاب تعمیرکار</option>{technicianOptions.map((name) => <option key={name} value={name}>{name}</option>)}<option value={customTechnicianValue}>تعمیرکار دیگر</option></select></span></label>{technicianSelection === customTechnicianValue && <label className="field"><span className="field-label">نام تعمیرکار دیگر</span><input className="input" autoComplete="off" value={technicianName} onChange={(event) => setTechnicianName(event.target.value)} required /></label>}<label className="field"><span className="field-label">تعداد</span><input className="input" type="number" inputMode="numeric" min="1" max={selectedDevice?.availableQuantity ?? 999} autoComplete="off" value={quantity} onChange={(event) => setQuantity(event.target.value)} required /></label>{formError && <p className="technician-form-error" role="alert">{formError}</p>}<div className="dialog-actions"><button type="button" className="button button-ghost" onClick={() => setFormOpen(false)} disabled={saving}>انصراف</button><button className="button button-primary" disabled={saving || !devices.length}>{saving ? <LoaderCircle className="spinning" /> : <Plus />}{saving ? "در حال ثبت..." : "ثبت ارجاع"}</button></div></form></Dialog>
 
   <Dialog open={Boolean(linkResult)} onClose={() => setLinkResult(null)} title={linkResult?.title ?? "لینک تأیید"} description="این لینک را برای تعمیرکار ارسال کنید." mark={<Link2 />}><div className="technician-link-box"><div dir="ltr">{linkResult?.url}</div><button className="button button-secondary" onClick={copyLink}>{copied ? <Check /> : <Clipboard />}{copied ? "کپی شد" : "کپی لینک"}</button><button className="button button-primary" onClick={shareLink}><Send />ارسال لینک</button></div></Dialog>
   </div>;

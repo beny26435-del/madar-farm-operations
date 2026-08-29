@@ -152,6 +152,21 @@ test("گردش دستگاه با تعمیرکار دو لینک تأیید ام�
   assert.match(proxy, /technician-confirm/);
 });
 
+test("تعمیرکارهای ثابت قابل انتخاب هستند و نام آزاد فقط برای گزینه دیگر نمایش داده می‌شود", async () => {
+  const web = await read("components/technician-jobs-view.tsx");
+  const mobile = await read("mobile/src/app/technicians.tsx");
+  for (const source of [web, mobile]) {
+    assert.match(source, /مهندس صادقی/);
+    assert.match(source, /مهندس افشار/);
+    assert.match(source, /مهندس کاکاوند/);
+    assert.match(source, /مهندس احمدی/);
+    assert.match(source, /تعمیرکار دیگر/);
+    assert.match(source, /نام تعمیرکار دیگر/);
+  }
+  assert.match(web, /technicianSelection === customTechnicianValue/);
+  assert.match(mobile, /technicianSelection === otherTechnician/);
+});
+
 test("ارجاع‌های تعمیرکار برای ثبت‌کننده خصوصی و برای میلاد کامل است", async () => {
   const page = await read("app/technicians/page.tsx");
   const confirmationApi = await read("app/api/technician-jobs/[id]/confirmation/route.ts");
