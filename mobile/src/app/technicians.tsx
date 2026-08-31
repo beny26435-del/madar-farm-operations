@@ -17,6 +17,7 @@ export default function TechniciansScreen() {
   const { profile } = useAuth();
   const [jobs, setJobs] = useState<TechnicianJob[]>([]);
   const [items, setItems] = useState<RepairItem[]>([]);
+  const [section, setSection] = useState<"handover" | "returns">("handover");
   const [technicianSelection, setTechnicianSelection] = useState("");
   const [technicianName, setTechnicianName] = useState("");
   const [itemId, setItemId] = useState("");
@@ -44,6 +45,7 @@ export default function TechniciansScreen() {
 
   useFocusEffect(useCallback(() => { void load(); }, [load]));
   const selectedItem = useMemo(() => items.find((item) => item.id === itemId), [itemId, items]);
+  const visibleJobs = useMemo(() => jobs.filter((job) => section === "handover" ? job.status === "awaiting_handover" : job.status !== "awaiting_handover"), [jobs, section]);
 
   function selectTechnician(value: string) {
     setTechnicianSelection(value);
@@ -88,7 +90,11 @@ export default function TechniciansScreen() {
     <Header title="تعمیرکاران" subtitle={profile?.role === "admin" ? "همه ارجاع‌ها" : "فقط ارجاع‌های ثبت‌شده شما"} action={<Pressable onPress={() => router.back()}><Ionicons name="arrow-back" size={24} /></Pressable>} />
     {error ? <ErrorBanner message={error} /> : null}
     {success ? <SuccessBanner message={success} /> : null}
-    <Card>
+    <View style={styles.tabs} accessibilityRole="tablist">
+      <Pressable accessibilityRole="tab" accessibilityState={{ selected: section === "handover" }} onPress={() => setSection("handover")} style={[styles.tab, section === "handover" && styles.tabActive]}><Ionicons name="send-outline" size={18} color={section === "handover" ? "#fff" : colors.muted} /><Text style={[styles.tabText, section === "handover" && styles.tabTextActive]}>تحویل به تعمیرکار · {faNumber(jobs.filter((job) => job.status === "awaiting_handover").length)}</Text></Pressable>
+      <Pressable accessibilityRole="tab" accessibilityState={{ selected: section === "returns" }} onPress={() => setSection("returns")} style={[styles.tab, section === "returns" && styles.tabActive]}><Ionicons name="return-down-back-outline" size={18} color={section === "returns" ? "#fff" : colors.muted} /><Text style={[styles.tabText, section === "returns" && styles.tabTextActive]}>مرجوعی · {faNumber(jobs.filter((job) => job.status !== "awaiting_handover").length)}</Text></Pressable>
+    </View>
+    {section === "handover" ? <Card>
       <Text style={styles.label}>تعمیرکار</Text>
       <View style={styles.technicians}>
         {[...technicianOptions, otherTechnician].map((value) => {
@@ -105,12 +111,17 @@ export default function TechniciansScreen() {
       <View style={styles.items}>{items.map((item) => <Pressable key={item.id} onPress={() => setItemId(item.id)} style={[styles.item, itemId === item.id && styles.itemActive]}><Ionicons name={itemId === item.id ? "checkmark-circle" : "cube-outline"} size={20} color={itemId === item.id ? colors.success : colors.muted} /><Text>{item.item_name} · {faNumber(item.quantity)}</Text></Pressable>)}</View>
       {selectedItem ? <Field label="تعداد" value={quantity} onChangeText={(value) => setQuantity(value.replace(/\D/g, "").slice(0, 3))} keyboardType="numeric" /> : null}
       <Button title="ثبت ارجاع" icon="add" onPress={create} loading={pending} />
-    </Card>
-    {jobs.length === 0 ? <Card><Empty title="ارجاعی ثبت نشده" description="دستگاه‌های تحویلی به تعمیرکار در این صفحه نمایش داده می‌شوند." /></Card> : jobs.map((job) => <Card key={job.id}><View style={styles.head}><Badge text={statusLabels[job.status]} tone={job.status === "returned" ? "success" : "warning"} /><View><Text style={styles.title}>{job.technician_name}</Text><Text style={styles.meta}>{job.item_name} · {job.customer_name} · {faNumber(job.quantity)}</Text></View></View>{job.status === "awaiting_handover" ? <Button title="ارسال لینک تحویل" icon="share-social-outline" onPress={() => share(job, "handover")} /> : job.status === "with_technician" || job.status === "awaiting_return" ? <Button title="ارسال لینک بازگشت" icon="return-down-back-outline" onPress={() => share(job, "return")} /> : null}</Card>)}
+    </Card> : null}
+    {visibleJobs.length === 0 ? <Card><Empty title={section === "returns" ? "هنوز مرجوعی ندارید" : "ارجاع در انتظار تحویلی نیست"} description={section === "returns" ? "دستگاه‌ها پس از تأیید تحویل تعمیرکار، اینجا قرار می‌گیرند." : "ارجاع جدید ثبت کنید و لینک تحویل را برای تعمیرکار بفرستید."} /></Card> : visibleJobs.map((job) => <Card key={job.id}><View style={styles.head}><Badge text={statusLabels[job.status]} tone={job.status === "returned" ? "success" : "warning"} /><View><Text style={styles.title}>{job.technician_name}</Text><Text style={styles.meta}>{job.item_name} · {job.customer_name} · {faNumber(job.quantity)}</Text></View></View>{job.status === "awaiting_handover" ? <Button title="ارسال لینک تحویل" icon="share-social-outline" onPress={() => share(job, "handover")} /> : job.status === "with_technician" ? <Button title="ایجاد لینک مرجوعی" icon="return-down-back-outline" onPress={() => share(job, "return")} /> : job.status === "awaiting_return" ? <Button title="ارسال دوباره لینک مرجوعی" icon="share-social-outline" onPress={() => share(job, "return")} /> : null}</Card>)}
   </Screen>;
 }
 
 const styles = StyleSheet.create({
+  tabs: { padding: 5, borderRadius: 17, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.surfaceMuted, flexDirection: "row-reverse", gap: 5 },
+  tab: { minHeight: 46, flex: 1, paddingHorizontal: 10, borderRadius: 13, flexDirection: "row-reverse", alignItems: "center", justifyContent: "center", gap: 6 },
+  tabActive: { backgroundColor: colors.primary },
+  tabText: { color: colors.muted, fontSize: 12, fontWeight: "800", textAlign: "center", writingDirection: "rtl" },
+  tabTextActive: { color: "#fff" },
   label: { fontWeight: "800", fontSize: 13, textAlign: "right" },
   technicians: { gap: 7 },
   technician: { flexDirection: "row-reverse", alignItems: "center", justifyContent: "flex-start", gap: 9, paddingVertical: 12, paddingHorizontal: 13, borderRadius: 13, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.surface },

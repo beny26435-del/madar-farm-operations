@@ -670,10 +670,15 @@ button { cursor: pointer; }
 .technician-summary span { color: var(--muted-foreground); font-size: 10px; }
 .technician-summary strong { font-size: 18px; }
 .technician-panel { overflow: hidden; }
-.technician-toolbar { min-height: 70px; padding: 12px 15px; border-bottom: 1px solid var(--border); display: flex; justify-content: flex-end; }
+.technician-toolbar { min-height: 70px; padding: 12px 15px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; gap: 12px; }
 .technician-toolbar label { width: min(360px,100%); height: 43px; padding: 0 12px; border: 1px solid var(--border-strong); border-radius: 11px; color: #89958e; display: flex; align-items: center; gap: 8px; }
 .technician-toolbar svg { width: 16px; }
 .technician-toolbar input { width: 100%; border: 0; outline: 0; background: transparent; font-family: inherit; }
+.technician-tabs { padding: 4px; border: 1px solid var(--border); border-radius: 12px; background: #f4f6f4; display: flex; align-items: center; gap: 4px; }
+.technician-tabs button { min-height: 35px; padding: 0 11px; border: 0; border-radius: 9px; color: #68766d; background: transparent; display: flex; align-items: center; gap: 6px; font-family: inherit; font-size: 9px; font-weight: 750; }
+.technician-tabs button.active { color: #fff; background: var(--primary); box-shadow: 0 4px 10px rgba(22,40,29,.12); }
+.technician-tabs button > span { min-width: 19px; height: 19px; padding: 0 5px; border-radius: 999px; color: #5e6d63; background: #fff; display: grid; place-items: center; font-size: 8px; }
+.technician-tabs button.active > span { color: var(--primary); }
 .technician-page-error { margin: 12px 15px 0; padding: 10px 12px; border-radius: 9px; color: #923e35; background: #fff2ef; font-size: 9px; }
 .technician-grid { padding: 14px; display: grid; grid-template-columns: repeat(auto-fill,minmax(310px,1fr)); gap: 11px; }
 .technician-card { min-width: 0; padding: 15px; border: 1px solid var(--border); border-radius: 13px; background: #fff; display: grid; gap: 14px; }
@@ -1398,7 +1403,10 @@ a.maintenance-intake-card:hover { border-color: #bcc8be; transform: translateY(-
   .report-delete-button { width: 34px; height: 34px; }
   .technician-summary { overflow-x: auto; grid-template-columns: repeat(3,150px); }
   .technician-summary article { min-height: 63px; padding: 11px 13px; }
-  .technician-toolbar { padding: 10px 12px; }
+  .technician-toolbar { padding: 10px 12px; align-items: stretch; flex-direction: column; }
+  .technician-toolbar label { width: 100%; }
+  .technician-tabs { display: grid; grid-template-columns: 1fr 1fr; }
+  .technician-tabs button { justify-content: center; }
   .technician-grid { grid-template-columns: 1fr; padding: 11px; }
   .technician-card { padding: 13px; }
   .technician-card > footer { align-items: flex-end; }

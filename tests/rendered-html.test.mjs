@@ -143,13 +143,26 @@ test("گردش دستگاه با تعمیرکار دو لینک تأیید ام�
   const proxy = await read("proxy.ts");
   assert.match(page, /from\("technician_jobs"\)/);
   assert.match(view, /لینک تحویل/);
-  assert.match(view, /لینک بازگشت/);
+  assert.match(view, /لینک مرجوعی/);
   assert.match(token, /randomBytes\(32\)/);
   assert.match(publicApi, /confirm_technician_handover/);
   assert.match(migration, /create table public\.technician_jobs/);
   assert.match(migration, /create table public\.technician_job_confirmations/);
   assert.match(migration, /security definer/);
   assert.match(proxy, /technician-confirm/);
+});
+
+test("لینک تعمیرکار زمان تحویل را نشان می‌دهد و مرجوعی بخش مستقل دارد", async () => {
+  const confirmation = await read("components/technician-confirmation-view.tsx");
+  const web = await read("components/technician-jobs-view.tsx");
+  const mobile = await read("mobile/src/app/technicians.tsx");
+  assert.match(confirmation, /زمان تحویل دستگاه/);
+  assert.match(confirmation, /formatDate\(confirmation\.requestedAt\)/);
+  for (const source of [web, mobile]) {
+    assert.match(source, /"handover" \| "returns"/);
+    assert.match(source, /مرجوعی/);
+    assert.match(source, /ایجاد لینک مرجوعی/);
+  }
 });
 
 test("تعمیرکارهای ثابت قابل انتخاب هستند و نام آزاد فقط برای گزینه دیگر نمایش داده می‌شود", async () => {
