@@ -1,7 +1,13 @@
 "use client";
 
-import { AlertTriangle, CalendarClock, CheckCircle2, Clock3, HardHat, PackageCheck, RotateCcw, ShieldCheck } from "lucide-react";
+import { AlertTriangle, CalendarClock, CalendarDays, CheckCircle2, ChevronLeft, ChevronRight, Clock3, HardHat, PackageCheck, RotateCcw, ShieldCheck } from "lucide-react";
 import { useState } from "react";
+
+import { gregorianToJalali, jalaliToGregorian, parseJalaliDate } from "@/lib/date/jalali";
+
+const jalaliMonths = ["فروردین", "اردیبهشت", "خرداد", "تیر", "مرداد", "شهریور", "مهر", "آبان", "آذر", "دی", "بهمن", "اسفند"];
+const weekDays = ["ش", "ی", "د", "س", "چ", "پ", "ج"];
+const faNumber = (value: number | string) => String(value).replace(/\d/g, (digit) => "۰۱۲۳۴۵۶۷۸۹"[Number(digit)]);
 
 type Confirmation = {
   type: "handover" | "return" | "rework";
@@ -20,22 +26,71 @@ function formatDate(value: string) {
   return new Intl.DateTimeFormat("fa-IR", { year: "numeric", month: "long", day: "numeric", hour: "2-digit", minute: "2-digit" }).format(new Date(value));
 }
 
-function minimumLocalDateTime() {
-  const date = new Date(Date.now() + 5 * 60 * 1000);
-  const local = new Date(date.getTime() - date.getTimezoneOffset() * 60_000);
-  return local.toISOString().slice(0, 16);
+function localDateTimeParts(value: string | null) {
+  if (!value) return { year: "", month: "", day: "", time: "" };
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) return { year: "", month: "", day: "", time: "" };
+  const pad = (part: number) => String(part).padStart(2, "0");
+  const jalali = gregorianToJalali(parsed.getFullYear(), parsed.getMonth() + 1, parsed.getDate());
+  return {
+    year: String(jalali.year),
+    month: String(jalali.month),
+    day: String(jalali.day),
+    time: `${pad(parsed.getHours())}:${pad(parsed.getMinutes())}`,
+  };
 }
 
 export function TechnicianConfirmationView({ token, confirmation }: { token: string; confirmation: Confirmation | null }) {
   const [confirmed, setConfirmed] = useState(Boolean(confirmation?.confirmedAt));
   const [confirmedAt, setConfirmedAt] = useState(confirmation?.confirmedAt ?? null);
-  const [promisedReturnAt, setPromisedReturnAt] = useState(confirmation?.promised_return_at ?? "");
+  const initialPromisedReturn = localDateTimeParts(confirmation?.promised_return_at ?? null);
+  const [promisedDate, setPromisedDate] = useState({ year: initialPromisedReturn.year, month: initialPromisedReturn.month, day: initialPromisedReturn.day });
+  const [promisedTime, setPromisedTime] = useState(initialPromisedReturn.time);
+  const today = new Date();
+  const currentJalali = gregorianToJalali(today.getFullYear(), today.getMonth() + 1, today.getDate());
+  const [datePickerOpen, setDatePickerOpen] = useState(false);
+  const [viewYear, setViewYear] = useState(Number(initialPromisedReturn.year) || currentJalali.year);
+  const [viewMonth, setViewMonth] = useState(Number(initialPromisedReturn.month) || currentJalali.month);
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const isReturn = confirmation?.type === "return";
   const isRework = confirmation?.type === "rework";
   const needsPromisedReturn = Boolean(confirmation && !isReturn);
+  const promisedGregorianDate = parseJalaliDate(promisedDate.year, promisedDate.month, promisedDate.day);
+  const promisedReturnAt = promisedGregorianDate && promisedTime ? `${promisedGregorianDate}T${promisedTime}` : "";
+  const firstGregorian = jalaliToGregorian(viewYear, viewMonth, 1);
+  const firstWeekDay = (new Date(firstGregorian.year, firstGregorian.month - 1, firstGregorian.day).getDay() + 1) % 7;
+  const monthLength = viewMonth <= 6 ? 31 : viewMonth <= 11 ? 30 : parseJalaliDate(String(viewYear), "12", "30") ? 30 : 29;
+  const calendarCells: Array<number | null> = [...Array.from({ length: firstWeekDay }, () => null), ...Array.from({ length: monthLength }, (_, index) => index + 1)];
+  const selectedDateLabel = promisedDate.year && promisedDate.month && promisedDate.day
+    ? `${faNumber(promisedDate.day)} ${jalaliMonths[Number(promisedDate.month) - 1]} ${faNumber(promisedDate.year)}`
+    : null;
+
+  function moveMonth(direction: -1 | 1) {
+    const nextMonth = viewMonth + direction;
+    if (nextMonth < 1) {
+      setViewYear((year) => year - 1);
+      setViewMonth(12);
+    } else if (nextMonth > 12) {
+      setViewYear((year) => year + 1);
+      setViewMonth(1);
+    } else {
+      setViewMonth(nextMonth);
+    }
+  }
+
+  function selectDate(year: number, month: number, day: number) {
+    setPromisedDate({ year: String(year), month: String(month), day: String(day) });
+    setDatePickerOpen(false);
+    setError(null);
+  }
+
+  function isPastDate(year: number, month: number, day: number) {
+    if (year !== currentJalali.year) return year < currentJalali.year;
+    if (month !== currentJalali.month) return month < currentJalali.month;
+    return day < currentJalali.day;
+  }
 
   async function confirm() {
     let promisedReturnIso: string | null = null;
@@ -79,7 +134,22 @@ export function TechnicianConfirmationView({ token, confirmation }: { token: str
     {confirmed ? <div className="confirmation-success"><span><CheckCircle2 /></span><h1>تأیید شما ثبت شد</h1><p>{successText}</p>{needsPromisedReturn && promisedReturnAt && <div className="confirmation-promised-result"><small>زمان اعلام‌شده برای تحویل به مجموعه</small><strong>{formatDate(promisedReturnAt)}</strong></div>}{confirmedAt && <time>{formatDate(confirmedAt)}</time>}</div> : <>
       <div className="confirmation-copy"><small>{confirmation.technician_name}</small><h1>{question}</h1><p>مشخصات زیر را بررسی کنید و فقط در صورت درست بودن، تأیید را بزنید.</p></div>
       <div className="confirmation-items"><article className="confirmation-item"><span><PackageCheck /></span><div><small>دستگاه مشتری {confirmation.customer_name}</small><strong>{confirmation.item_name}</strong><p>{confirmation.quantity.toLocaleString("fa-IR")} عدد</p></div></article></div>
-      {needsPromisedReturn && <label className="confirmation-promised-field"><span><CalendarClock /></span><div><strong>چه زمانی دستگاه را به مجموعه تحویل می‌دهید؟</strong><small>تاریخ و ساعت تقریبی را انتخاب کنید</small><input type="datetime-local" min={minimumLocalDateTime()} value={promisedReturnAt} onChange={(event) => { setPromisedReturnAt(event.target.value); setError(null); }} required /></div></label>}
+      {needsPromisedReturn && <section className="confirmation-promised-field">
+        <header><span><CalendarClock /></span><div><strong>چه زمانی دستگاه را به مجموعه تحویل می‌دهید؟</strong><small>تاریخ شمسی و ساعت تقریبی را انتخاب کنید</small></div></header>
+        <div className="confirmation-promised-controls">
+          <div className="confirmation-promised-control confirmation-promised-date jalali-picker-field">
+            <span><CalendarDays />تاریخ تحویل</span>
+            <button type="button" className={`jalali-picker-trigger ${selectedDateLabel ? "selected" : ""}`} aria-expanded={datePickerOpen} onClick={() => setDatePickerOpen((open) => !open)}><CalendarDays /><span>{selectedDateLabel ?? "انتخاب تاریخ"}</span><ChevronLeft /></button>
+            {datePickerOpen && <div className="jalali-picker-panel" role="dialog" aria-label="تقویم شمسی">
+              <div className="jalali-picker-header"><button type="button" aria-label="ماه قبل" onClick={() => moveMonth(-1)}><ChevronRight /></button><strong>{jalaliMonths[viewMonth - 1]} {faNumber(viewYear)}</strong><button type="button" aria-label="ماه بعد" onClick={() => moveMonth(1)}><ChevronLeft /></button></div>
+              <div className="jalali-weekdays">{weekDays.map((day) => <span key={day}>{day}</span>)}</div>
+              <div className="jalali-days">{calendarCells.map((day, index) => day ? <button type="button" key={`${viewYear}-${viewMonth}-${day}`} disabled={isPastDate(viewYear, viewMonth, day)} className={`${Number(promisedDate.year) === viewYear && Number(promisedDate.month) === viewMonth && Number(promisedDate.day) === day ? "selected" : ""} ${currentJalali.year === viewYear && currentJalali.month === viewMonth && currentJalali.day === day ? "today" : ""}`} onClick={() => selectDate(viewYear, viewMonth, day)}>{faNumber(day)}</button> : <span key={`empty-${index}`} />)}</div>
+              <div className="jalali-picker-footer"><button type="button" onClick={() => selectDate(currentJalali.year, currentJalali.month, currentJalali.day)}>امروز</button><button type="button" onClick={() => setDatePickerOpen(false)}>بستن</button></div>
+            </div>}
+          </div>
+          <label className="confirmation-promised-control"><span><Clock3 />ساعت تحویل</span><input type="time" value={promisedTime} onChange={(event) => { setPromisedTime(event.target.value); setError(null); }} required /></label>
+        </div>
+      </section>}
       <div className="confirmation-meta"><span>زمان ساخت درخواست</span><strong>{formatDate(confirmation.requestedAt)}</strong></div>
       {error && <p className="confirmation-error" role="alert">{error}</p>}
       <button className="button button-primary confirmation-submit" onClick={confirm} disabled={pending}><CheckCircle2 />{pending ? "در حال ثبت..." : isReturn ? "تأیید می‌کنم تحویل دادم" : "ثبت زمان و تأیید تحویل"}</button>
