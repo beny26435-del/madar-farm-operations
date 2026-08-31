@@ -17,7 +17,7 @@ export default function TechniciansScreen() {
   const { profile } = useAuth();
   const [jobs, setJobs] = useState<TechnicianJob[]>([]);
   const [items, setItems] = useState<RepairItem[]>([]);
-  const [section, setSection] = useState<"handover" | "returns">("handover");
+  const [section, setSection] = useState<"flow" | "rework">("flow");
   const [technicianSelection, setTechnicianSelection] = useState("");
   const [technicianName, setTechnicianName] = useState("");
   const [itemId, setItemId] = useState("");
@@ -31,7 +31,7 @@ export default function TechniciansScreen() {
     setRefreshing(true);
     let query = supabase
       .from("technician_jobs")
-      .select("id, repair_item_id, technician_name, item_name, customer_name, quantity, status, created_by, created_at")
+      .select("id, repair_item_id, technician_name, item_name, customer_name, quantity, status, rework_count, promised_return_at, created_by, created_at")
       .order("created_at", { ascending: false });
     if (profile?.role !== "admin") query = query.eq("created_by", profile?.id ?? "");
     const [{ data: jobData }, { data: itemData }] = await Promise.all([
@@ -45,7 +45,7 @@ export default function TechniciansScreen() {
 
   useFocusEffect(useCallback(() => { void load(); }, [load]));
   const selectedItem = useMemo(() => items.find((item) => item.id === itemId), [itemId, items]);
-  const visibleJobs = useMemo(() => jobs.filter((job) => section === "handover" ? job.status === "awaiting_handover" : job.status !== "awaiting_handover"), [jobs, section]);
+  const visibleJobs = useMemo(() => jobs.filter((job) => section === "flow" ? job.status !== "awaiting_rework" : job.status === "returned" || job.status === "awaiting_rework" || job.rework_count > 0), [jobs, section]);
 
   function selectTechnician(value: string) {
     setTechnicianSelection(value);
@@ -76,7 +76,7 @@ export default function TechniciansScreen() {
     }
   }
 
-  async function share(job: TechnicianJob, type: "handover" | "return") {
+  async function share(job: TechnicianJob, type: "handover" | "return" | "rework") {
     try {
       const data = await apiFetch<{ confirmationUrl: string }>(`/api/technician-jobs/${job.id}/confirmation`, { method: "POST", body: JSON.stringify({ type }) });
       await Share.share({ message: data.confirmationUrl });
@@ -91,10 +91,10 @@ export default function TechniciansScreen() {
     {error ? <ErrorBanner message={error} /> : null}
     {success ? <SuccessBanner message={success} /> : null}
     <View style={styles.tabs} accessibilityRole="tablist">
-      <Pressable accessibilityRole="tab" accessibilityState={{ selected: section === "handover" }} onPress={() => setSection("handover")} style={[styles.tab, section === "handover" && styles.tabActive]}><Ionicons name="send-outline" size={18} color={section === "handover" ? "#fff" : colors.muted} /><Text style={[styles.tabText, section === "handover" && styles.tabTextActive]}>تحویل به تعمیرکار · {faNumber(jobs.filter((job) => job.status === "awaiting_handover").length)}</Text></Pressable>
-      <Pressable accessibilityRole="tab" accessibilityState={{ selected: section === "returns" }} onPress={() => setSection("returns")} style={[styles.tab, section === "returns" && styles.tabActive]}><Ionicons name="return-down-back-outline" size={18} color={section === "returns" ? "#fff" : colors.muted} /><Text style={[styles.tabText, section === "returns" && styles.tabTextActive]}>مرجوعی · {faNumber(jobs.filter((job) => job.status !== "awaiting_handover").length)}</Text></Pressable>
+      <Pressable accessibilityRole="tab" accessibilityState={{ selected: section === "flow" }} onPress={() => setSection("flow")} style={[styles.tab, section === "flow" && styles.tabActive]}><Ionicons name="swap-horizontal-outline" size={18} color={section === "flow" ? "#fff" : colors.muted} /><Text style={[styles.tabText, section === "flow" && styles.tabTextActive]}>گردش دستگاه · {faNumber(jobs.filter((job) => job.status !== "awaiting_rework").length)}</Text></Pressable>
+      <Pressable accessibilityRole="tab" accessibilityState={{ selected: section === "rework" }} onPress={() => setSection("rework")} style={[styles.tab, section === "rework" && styles.tabActive]}><Ionicons name="return-down-back-outline" size={18} color={section === "rework" ? "#fff" : colors.muted} /><Text style={[styles.tabText, section === "rework" && styles.tabTextActive]}>مرجوعی خراب · {faNumber(jobs.filter((job) => job.status === "returned" || job.status === "awaiting_rework" || job.rework_count > 0).length)}</Text></Pressable>
     </View>
-    {section === "handover" ? <Card>
+    {section === "flow" ? <Card>
       <Text style={styles.label}>تعمیرکار</Text>
       <View style={styles.technicians}>
         {[...technicianOptions, otherTechnician].map((value) => {
@@ -112,7 +112,11 @@ export default function TechniciansScreen() {
       {selectedItem ? <Field label="تعداد" value={quantity} onChangeText={(value) => setQuantity(value.replace(/\D/g, "").slice(0, 3))} keyboardType="numeric" /> : null}
       <Button title="ثبت ارجاع" icon="add" onPress={create} loading={pending} />
     </Card> : null}
-    {visibleJobs.length === 0 ? <Card><Empty title={section === "returns" ? "هنوز مرجوعی ندارید" : "ارجاع در انتظار تحویلی نیست"} description={section === "returns" ? "دستگاه‌ها پس از تأیید تحویل تعمیرکار، اینجا قرار می‌گیرند." : "ارجاع جدید ثبت کنید و لینک تحویل را برای تعمیرکار بفرستید."} /></Card> : visibleJobs.map((job) => <Card key={job.id}><View style={styles.head}><Badge text={statusLabels[job.status]} tone={job.status === "returned" ? "success" : "warning"} /><View><Text style={styles.title}>{job.technician_name}</Text><Text style={styles.meta}>{job.item_name} · {job.customer_name} · {faNumber(job.quantity)}</Text></View></View>{job.status === "awaiting_handover" ? <Button title="ارسال لینک تحویل" icon="share-social-outline" onPress={() => share(job, "handover")} /> : job.status === "with_technician" ? <Button title="ایجاد لینک مرجوعی" icon="return-down-back-outline" onPress={() => share(job, "return")} /> : job.status === "awaiting_return" ? <Button title="ارسال دوباره لینک مرجوعی" icon="share-social-outline" onPress={() => share(job, "return")} /> : null}</Card>)}
+    {visibleJobs.length === 0 ? <Card><Empty title={section === "rework" ? "دستگاهی برای مرجوعی نیست" : "ارجاعی ثبت نشده است"} description={section === "rework" ? "دستگاه تحویل‌گرفته‌شده‌ای که هنوز خراب است را از این بخش مرجوع کنید." : "ارجاع جدید ثبت کنید و لینک تحویل را برای تعمیرکار بفرستید."} /></Card> : visibleJobs.map((job) => {
+      const actionType = section === "rework" && (job.status === "returned" || job.status === "awaiting_rework") ? "rework" : job.status === "awaiting_handover" ? "handover" : job.status === "with_technician" || job.status === "awaiting_return" ? "return" : null;
+      const title = actionType === "handover" ? "ارسال لینک تحویل" : actionType === "return" ? job.status === "with_technician" ? "ساخت لینک تحویل به شما" : "ارسال دوباره لینک تحویل" : actionType === "rework" ? job.status === "returned" ? "مرجوع کردن به تعمیرکار" : "ارسال دوباره لینک مرجوعی" : "";
+      return <Card key={job.id}><View style={styles.head}><Badge text={statusLabels[job.status]} tone={job.status === "returned" ? "success" : "warning"} /><View><Text style={styles.title}>{job.technician_name}</Text><Text style={styles.meta}>{job.item_name} · {job.customer_name} · {faNumber(job.quantity)}</Text></View></View>{job.promised_return_at && job.status !== "returned" ? <View style={styles.promised}><Ionicons name="calendar-outline" size={17} color={colors.success} /><Text style={styles.promisedText}>تحویل اعلام‌شده: {new Intl.DateTimeFormat("fa-IR", { dateStyle: "medium", timeStyle: "short" }).format(new Date(job.promised_return_at))}</Text></View> : null}{actionType ? <Button title={title} icon={actionType === "handover" ? "share-social-outline" : "return-down-back-outline"} onPress={() => share(job, actionType)} /> : null}</Card>;
+    })}
   </Screen>;
 }
 
@@ -134,4 +138,6 @@ const styles = StyleSheet.create({
   head: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
   title: { fontWeight: "900", fontSize: 16, textAlign: "right" },
   meta: { fontSize: 11, color: colors.muted, textAlign: "right", marginTop: 4 },
+  promised: { padding: 11, borderRadius: 13, backgroundColor: colors.successSoft, flexDirection: "row-reverse", alignItems: "center", gap: 7 },
+  promisedText: { flex: 1, color: colors.success, fontSize: 11, fontWeight: "700", textAlign: "right", writingDirection: "rtl" },
 });

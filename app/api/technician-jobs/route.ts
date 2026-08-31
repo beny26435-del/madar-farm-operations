@@ -26,7 +26,7 @@ export async function POST(request: Request) {
   if (!item || item.status !== "received") return NextResponse.json({ message: "دستگاه انتخاب‌شده در تعمیرگاه موجود نیست." }, { status: 404 });
   const [{ data: customer }, { data: activeJobs }] = await Promise.all([
     admin.from("customers").select("full_name").eq("id", item.customer_id).maybeSingle(),
-    admin.from("technician_jobs").select("quantity").eq("repair_item_id", item.id).in("status", ["awaiting_handover", "with_technician", "awaiting_return"]),
+    admin.from("technician_jobs").select("quantity").eq("repair_item_id", item.id).in("status", ["awaiting_handover", "with_technician", "awaiting_return", "awaiting_rework"]),
   ]);
   if (!customer) return NextResponse.json({ message: "پرونده مشتری پیدا نشد." }, { status: 404 });
   const assignedQuantity = (activeJobs ?? []).reduce((sum, job) => sum + job.quantity, 0);
@@ -39,7 +39,7 @@ export async function POST(request: Request) {
     customer_name: customer.full_name,
     quantity: parsed.data.quantity,
     created_by: actorId,
-  }).select("id, repair_item_id, technician_name, item_name, customer_name, quantity, status, handed_over_at, returned_at, created_at").single();
+  }).select("id, repair_item_id, technician_name, item_name, customer_name, quantity, status, rework_count, promised_return_at, handed_over_at, returned_at, last_reworked_at, created_at").single();
   if (error) return NextResponse.json({ message: "ثبت تحویل به تعمیرکار انجام نشد." }, { status: 500 });
 
   await recordActivity({ actorId, action: "technician_job.created", entityType: "technician_job", entityId: job.id, metadata: { technician_name: job.technician_name, item_name: job.item_name, quantity: job.quantity } });

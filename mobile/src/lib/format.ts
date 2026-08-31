@@ -13,4 +13,4 @@ export function formatMoney(value: number) {
 }
 
 export const roleLabels = { admin: "مدیر اصلی", manager: "مدیر عملیات", employee: "کارمند" } as const;
-export const statusLabels: Record<string, string> = { submitted: "ثبت‌شده", approved: "تأییدشده", rejected: "ردشده", revision_requested: "نیازمند اصلاح", draft: "پیش‌نویس", received: "در حال تعمیر", delivered: "تحویل‌شده", awaiting_handover: "در انتظار تحویل", with_technician: "نزد تعمیرکار", awaiting_return: "در انتظار بازگشت", returned: "بازگشته" };
+export const statusLabels: Record<string, string> = { submitted: "ثبت‌شده", approved: "تأییدشده", rejected: "ردشده", revision_requested: "نیازمند اصلاح", draft: "پیش‌نویس", received: "در حال تعمیر", delivered: "تحویل‌شده", awaiting_handover: "در انتظار تحویل", with_technician: "نزد تعمیرکار", awaiting_return: "منتظر تحویل به شما", returned: "تحویل‌گرفته‌شده", awaiting_rework: "منتظر تأیید مرجوعی" };

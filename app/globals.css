@@ -696,6 +696,10 @@ button { cursor: pointer; }
 .technician-device small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 8px; }
 .technician-device strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: #3f4f45; font-size: 10px; }
 .technician-device em { color: #435349; font-size: 9px; font-style: normal; font-weight: 700; }
+.technician-promised { min-height: 38px; padding: 8px 10px; border-radius: 9px; color: #52705b; background: #edf5ed; display: grid; grid-template-columns: 18px minmax(0,1fr) auto; align-items: center; gap: 7px; }
+.technician-promised svg { width: 15px; }
+.technician-promised span { font-size: 8px; }
+.technician-promised strong { font-size: 8px; direction: ltr; }
 .technician-card > footer { padding-top: 11px; border-top: 1px solid #edf0ed; display: flex; align-items: center; justify-content: space-between; gap: 9px; }
 .technician-card > footer time { color: var(--subtle-foreground); font-size: 8px; }
 .technician-card > footer button, .technician-card > footer span { min-height: 32px; padding: 0 9px; border: 0; border-radius: 8px; color: #fff; background: var(--primary); display: flex; align-items: center; gap: 5px; font-size: 8px; font-weight: 700; }
@@ -943,6 +947,14 @@ a.maintenance-intake-card:hover { border-color: #bcc8be; transform: translateY(-
 .confirmation-item small { color: #8a958e; font-size: 8px; }
 .confirmation-item strong { font-size: 13px; }
 .confirmation-item p { margin: 3px 0 0; color: #68766e; font-size: 10px; line-height: 1.8; }
+.confirmation-promised-field { margin: 13px 26px 0; padding: 14px; border: 1px solid #d9e2da; border-radius: 14px; background: #f4f8f3; display: flex; align-items: flex-start; gap: 11px; }
+.confirmation-promised-field > span { width: 40px; height: 40px; flex: 0 0 auto; border-radius: 11px; color: #55705d; background: #e2ece3; display: grid; place-items: center; }
+.confirmation-promised-field > span svg { width: 19px; }
+.confirmation-promised-field > div { min-width: 0; flex: 1; display: grid; gap: 4px; }
+.confirmation-promised-field strong { font-size: 11px; line-height: 1.8; }
+.confirmation-promised-field small { color: var(--muted-foreground); font-size: 8px; }
+.confirmation-promised-field input { width: 100%; height: 44px; margin-top: 7px; padding: 0 11px; border: 1px solid var(--border-strong); border-radius: 10px; outline: 0; color: var(--foreground); background: #fff; font-family: inherit; font-size: 11px; direction: ltr; }
+.confirmation-promised-field input:focus { border-color: #7f9585; box-shadow: 0 0 0 3px rgba(65,88,73,.08); }
 .confirmation-meta { margin: 13px 26px 0; padding: 11px 2px; border-bottom: 1px solid #edf0ed; display: flex; align-items: center; justify-content: space-between; gap: 10px; }
 .confirmation-meta span { color: var(--subtle-foreground); font-size: 9px; }
 .confirmation-meta strong { color: #526057; font-size: 9px; }
@@ -956,6 +968,9 @@ a.maintenance-intake-card:hover { border-color: #bcc8be; transform: translateY(-
 .confirmation-success h1, .confirmation-public-card.invalid h1 { margin: 18px 0 7px; font-size: 22px; }
 .confirmation-success p, .confirmation-public-card.invalid p { margin: 0; color: var(--muted-foreground); font-size: 11px; line-height: 1.9; }
 .confirmation-success time { margin-top: 12px; color: #8a958e; font-size: 9px; }
+.confirmation-promised-result { margin-top: 18px; padding: 12px 16px; border-radius: 12px; color: #496452; background: #edf5ed; display: grid; gap: 5px; }
+.confirmation-promised-result small { font-size: 8px; }
+.confirmation-promised-result strong { font-size: 11px; }
 .confirmation-public-card.invalid { min-height: 360px; padding: 45px 30px; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
 .confirmation-public-card.invalid > span { color: var(--warning); background: var(--warning-soft); }
 

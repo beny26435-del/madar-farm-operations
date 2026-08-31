@@ -134,12 +134,13 @@ test("فیلتر کارمند و لوکیشن و حذف گزارش فقط برا
   assert.match(api, /action: "report\.deleted"/);
 });
 
-test("گردش دستگاه با تعمیرکار دو لینک تأیید امن دارد", async () => {
+test("گردش دستگاه با تعمیرکار سه لینک تأیید امن دارد", async () => {
   const page = await read("app/technicians/page.tsx");
   const view = await read("components/technician-jobs-view.tsx");
   const token = await read("lib/technician-confirmations/token.ts");
   const publicApi = await read("app/api/technician-confirmations/[token]/route.ts");
   const migration = await read("supabase/migrations/202608180010_technician_handoffs.sql");
+  const reworkMigration = await read("supabase/migrations/202608310015_technician_rework_flow.sql");
   const proxy = await read("proxy.ts");
   assert.match(page, /from\("technician_jobs"\)/);
   assert.match(view, /لینک تحویل/);
@@ -149,19 +150,24 @@ test("گردش دستگاه با تعمیرکار دو لینک تأیید ام�
   assert.match(migration, /create table public\.technician_jobs/);
   assert.match(migration, /create table public\.technician_job_confirmations/);
   assert.match(migration, /security definer/);
+  assert.match(reworkMigration, /awaiting_rework/);
+  assert.match(reworkMigration, /confirmation_record\.type = 'rework'/);
   assert.match(proxy, /technician-confirm/);
 });
 
-test("لینک تعمیرکار زمان تحویل را نشان می‌دهد و مرجوعی بخش مستقل دارد", async () => {
+test("تعمیرکار زمان تحویل به مجموعه را مشخص می‌کند و مرجوعی خراب مستقل است", async () => {
   const confirmation = await read("components/technician-confirmation-view.tsx");
+  const confirmationApi = await read("app/api/technician-confirmations/[token]/route.ts");
   const web = await read("components/technician-jobs-view.tsx");
   const mobile = await read("mobile/src/app/technicians.tsx");
-  assert.match(confirmation, /زمان تحویل دستگاه/);
+  assert.match(confirmation, /type="datetime-local"/);
+  assert.match(confirmation, /چه زمانی دستگاه را به مجموعه تحویل می‌دهید/);
   assert.match(confirmation, /formatDate\(confirmation\.requestedAt\)/);
+  assert.match(confirmationApi, /p_promised_return_at/);
   for (const source of [web, mobile]) {
-    assert.match(source, /"handover" \| "returns"/);
-    assert.match(source, /مرجوعی/);
-    assert.match(source, /ایجاد لینک مرجوعی/);
+    assert.match(source, /"flow" \| "rework"/);
+    assert.match(source, /مرجوعی (?:دستگاه )?خراب/);
+    assert.match(source, /مرجوع کردن به تعمیرکار/);
   }
 });
 

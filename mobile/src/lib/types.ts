@@ -41,4 +41,4 @@ export type DailyReport = {
 
 export type Customer = { id: string; full_name: string; phone: string | null; created_at: string };
 export type RepairItem = { id: string; customer_id: string; intake_id: string | null; item_name: string; quantity: number; photo_path: string | null; status: "received" | "delivered"; received_at: string; delivered_at: string | null };
-export type TechnicianJob = { id: string; repair_item_id: string; technician_name: string; item_name: string; customer_name: string; quantity: number; status: "awaiting_handover" | "with_technician" | "awaiting_return" | "returned"; created_by: string; created_at: string };
+export type TechnicianJob = { id: string; repair_item_id: string; technician_name: string; item_name: string; customer_name: string; quantity: number; status: "awaiting_handover" | "with_technician" | "awaiting_return" | "returned" | "awaiting_rework"; rework_count: number; promised_return_at: string | null; created_by: string; created_at: string };

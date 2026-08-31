@@ -13,11 +13,11 @@ export default async function TechniciansPage() {
   const viewer = await requireViewer();
   if (!hasPermission(viewer.role, "technician-jobs:manage")) redirect("/dashboard");
   const admin = createAdminClient();
-  let visibleJobsQuery = admin.from("technician_jobs").select("id, repair_item_id, technician_name, item_name, customer_name, quantity, status, handed_over_at, returned_at, created_at").order("created_at", { ascending: false });
+  let visibleJobsQuery = admin.from("technician_jobs").select("id, repair_item_id, technician_name, item_name, customer_name, quantity, status, rework_count, promised_return_at, handed_over_at, returned_at, last_reworked_at, created_at").order("created_at", { ascending: false });
   if (viewer.role !== "admin") visibleJobsQuery = visibleJobsQuery.eq("created_by", viewer.id);
   const [{ data: jobs, error }, { data: activeAssignments }, { data: items }] = await Promise.all([
     visibleJobsQuery,
-    admin.from("technician_jobs").select("repair_item_id, quantity").in("status", ["awaiting_handover", "with_technician", "awaiting_return"]),
+    admin.from("technician_jobs").select("repair_item_id, quantity").in("status", ["awaiting_handover", "with_technician", "awaiting_return", "awaiting_rework"]),
     admin.from("customer_repair_items").select("id, customer_id, item_name, quantity, status").eq("status", "received").order("received_at", { ascending: false }),
   ]);
   const customerIds = [...new Set((items ?? []).map((item) => item.customer_id))];

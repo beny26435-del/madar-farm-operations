@@ -66,13 +66,13 @@ export type Database = {
         { token_hash?: string; expires_at?: string; confirmed_at?: string | null; created_at?: string }
       >;
       technician_jobs: Table<
-        { id: string; repair_item_id: string; technician_name: string; item_name: string; customer_name: string; quantity: number; status: "awaiting_handover" | "with_technician" | "awaiting_return" | "returned"; created_by: string; handed_over_at: string | null; returned_at: string | null; created_at: string; updated_at: string },
-        { repair_item_id: string; technician_name: string; item_name: string; customer_name: string; quantity: number; status?: "awaiting_handover" | "with_technician" | "awaiting_return" | "returned"; created_by: string; handed_over_at?: string | null; returned_at?: string | null },
-        { technician_name?: string; quantity?: number; status?: "awaiting_handover" | "with_technician" | "awaiting_return" | "returned"; handed_over_at?: string | null; returned_at?: string | null }
+        { id: string; repair_item_id: string; technician_name: string; item_name: string; customer_name: string; quantity: number; status: "awaiting_handover" | "with_technician" | "awaiting_return" | "returned" | "awaiting_rework"; created_by: string; handed_over_at: string | null; returned_at: string | null; rework_count: number; last_reworked_at: string | null; promised_return_at: string | null; created_at: string; updated_at: string },
+        { repair_item_id: string; technician_name: string; item_name: string; customer_name: string; quantity: number; status?: "awaiting_handover" | "with_technician" | "awaiting_return" | "returned" | "awaiting_rework"; created_by: string; handed_over_at?: string | null; returned_at?: string | null; rework_count?: number; last_reworked_at?: string | null; promised_return_at?: string | null },
+        { technician_name?: string; quantity?: number; status?: "awaiting_handover" | "with_technician" | "awaiting_return" | "returned" | "awaiting_rework"; handed_over_at?: string | null; returned_at?: string | null; rework_count?: number; last_reworked_at?: string | null; promised_return_at?: string | null }
       >;
       technician_job_confirmations: Table<
-        { id: string; job_id: string; type: "handover" | "return"; token_hash: string; expires_at: string; confirmed_at: string | null; created_by: string; created_at: string },
-        { job_id: string; type: "handover" | "return"; token_hash: string; expires_at: string; confirmed_at?: string | null; created_by: string; created_at?: string },
+        { id: string; job_id: string; type: "handover" | "return" | "rework"; token_hash: string; expires_at: string; confirmed_at: string | null; created_by: string; created_at: string },
+        { job_id: string; type: "handover" | "return" | "rework"; token_hash: string; expires_at: string; confirmed_at?: string | null; created_by: string; created_at?: string },
         { token_hash?: string; expires_at?: string; confirmed_at?: string | null; created_at?: string }
       >;
       maintenance_reports: Table<
@@ -95,11 +95,11 @@ export type Database = {
         Returns: Array<{ result: string; confirmation_type: "intake" | "delivery" | null; repair_item_id: string | null; repair_intake_id: string | null; customer_name: string | null; repair_item_name: string | null; confirmation_time: string | null }>;
       };
       confirm_technician_handover: {
-        Args: { p_token_hash: string };
-        Returns: Array<{ result: string; confirmation_type: "handover" | "return" | null; technician_job_id: string | null; technician_name: string | null; repair_item_name: string | null; customer_name: string | null; quantity: number | null; confirmation_time: string | null }>;
+        Args: { p_token_hash: string; p_promised_return_at?: string | null };
+        Returns: Array<{ result: string; confirmation_type: "handover" | "return" | "rework" | null; technician_job_id: string | null; technician_name: string | null; repair_item_name: string | null; customer_name: string | null; quantity: number | null; confirmation_time: string | null }>;
       };
     };
-    Enums: { app_role: AppRole; customer_confirmation_type: "intake" | "delivery"; technician_job_status: "awaiting_handover" | "with_technician" | "awaiting_return" | "returned"; technician_confirmation_type: "handover" | "return" };
+    Enums: { app_role: AppRole; customer_confirmation_type: "intake" | "delivery"; technician_job_status: "awaiting_handover" | "with_technician" | "awaiting_return" | "returned" | "awaiting_rework"; technician_confirmation_type: "handover" | "return" | "rework" };
     CompositeTypes: Record<never, never>;
   };
 };

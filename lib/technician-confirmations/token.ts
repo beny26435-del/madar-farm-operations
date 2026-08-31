@@ -3,7 +3,7 @@ import "server-only";
 import { createHash, randomBytes } from "node:crypto";
 import { createAdminClient } from "@/lib/supabase/admin";
 
-export type TechnicianConfirmationType = "handover" | "return";
+export type TechnicianConfirmationType = "handover" | "return" | "rework";
 
 export function hashTechnicianConfirmationToken(token: string) {
   return createHash("sha256").update(token).digest("hex");
@@ -19,10 +19,8 @@ export function isTechnicianConfirmationExpired(expiresAt: string) {
 
 export async function issueTechnicianConfirmation(input: { jobId: string; type: TechnicianConfirmationType; createdBy: string; origin: string }) {
   const admin = createAdminClient();
-  const { data: existing, error: lookupError } = await admin.from("technician_job_confirmations").select("id, confirmed_at").eq("job_id", input.jobId).eq("type", input.type).maybeSingle();
+  const { data: existing, error: lookupError } = await admin.from("technician_job_confirmations").select("id, confirmed_at").eq("job_id", input.jobId).eq("type", input.type).is("confirmed_at", null).order("created_at", { ascending: false }).limit(1).maybeSingle();
   if (lookupError) throw lookupError;
-  if (existing?.confirmed_at) return { status: "already_confirmed" as const };
-
   const token = randomBytes(32).toString("base64url");
   const issuedAt = new Date().toISOString();
   const values = {
