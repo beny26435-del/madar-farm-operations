@@ -26,8 +26,9 @@ export default function TechniciansScreen() {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [refreshing, setRefreshing] = useState(false);
-  const [selectedReworkIds, setSelectedReworkIds] = useState<string[]>([]);
-  const [reworkPending, setReworkPending] = useState(false);
+  const [reworkJob, setReworkJob] = useState<TechnicianJob | null>(null);
+  const [reworkQuantity, setReworkQuantity] = useState("");
+  const [linkingId, setLinkingId] = useState("");
 
   const load = useCallback(async () => {
     setRefreshing(true);
@@ -78,35 +79,27 @@ export default function TechniciansScreen() {
     }
   }
 
-  async function share(job: TechnicianJob, type: "handover" | "return" | "rework") {
+  async function share(job: TechnicianJob, type: "handover" | "return" | "rework", selectedQuantity?: number) {
+    setLinkingId(job.id);
+    setError("");
     try {
-      const data = await apiFetch<{ confirmationUrl: string }>(`/api/technician-jobs/${job.id}/confirmation`, { method: "POST", body: JSON.stringify({ type }) });
+      const data = await apiFetch<{ confirmationUrl: string }>(`/api/technician-jobs/${job.id}/confirmation`, { method: "POST", body: JSON.stringify({ type, quantity: selectedQuantity }) });
       await Share.share({ message: data.confirmationUrl });
+      if (type === "rework") { setReworkJob(null); setReworkQuantity(""); }
       void load();
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : "ساخت لینک انجام نشد.");
+    } finally { setLinkingId(""); }
+  }
+
+  function submitRework() {
+    if (!reworkJob) return;
+    const selected = Number(reworkQuantity);
+    if (!Number.isInteger(selected) || selected < 1 || selected > reworkJob.quantity) {
+      setError("تعداد مرجوعی را درست وارد کنید.");
+      return;
     }
-  }
-
-  function toggleRework(jobId: string) {
-    setSelectedReworkIds((current) => current.includes(jobId) ? current.filter((id) => id !== jobId) : [...current, jobId]);
-  }
-
-  async function shareSelectedRework() {
-    const selected = jobs.filter((job) => selectedReworkIds.includes(job.id) && (job.status === "returned" || job.status === "awaiting_rework"));
-    if (!selected.length) return;
-    setReworkPending(true); setError("");
-    try {
-      const links: string[] = [];
-      for (const job of selected) {
-        const data = await apiFetch<{ confirmationUrl: string }>(`/api/technician-jobs/${job.id}/confirmation`, { method: "POST", body: JSON.stringify({ type: "rework" }) });
-        links.push(`${job.item_name} · ${job.customer_name}\n${data.confirmationUrl}`);
-      }
-      await Share.share({ message: links.join("\n\n") });
-      setSelectedReworkIds([]); void load();
-    } catch (reason) {
-      setError(reason instanceof Error ? reason.message : "ساخت لینک‌های مرجوعی انجام نشد.");
-    } finally { setReworkPending(false); }
+    void share(reworkJob, "rework", selected);
   }
 
   return <Screen refreshing={refreshing} onRefresh={load}>
@@ -135,13 +128,11 @@ export default function TechniciansScreen() {
       {selectedItem ? <Field label="تعداد" value={quantity} onChangeText={(value) => setQuantity(value.replace(/\D/g, "").slice(0, 3))} keyboardType="numeric" /> : null}
       <Button title="ثبت ارجاع" icon="add" onPress={create} loading={pending} />
     </Card> : null}
-    {section === "rework" && visibleJobs.some((job) => job.status === "returned" || job.status === "awaiting_rework") ? <Card><Text style={styles.selectionTitle}>دستگاه‌های مرجوعی را انتخاب کنید</Text><Text style={styles.selectionText}>فقط موارد انتخاب‌شده برای تعمیرکار ارسال می‌شوند.</Text><Button title={`ساخت لینک ${faNumber(selectedReworkIds.length)} مورد`} icon="return-down-back-outline" onPress={shareSelectedRework} loading={reworkPending} disabled={!selectedReworkIds.length} /></Card> : null}
+    {section === "rework" && reworkJob ? <Card style={styles.reworkCard}><View style={styles.reworkHeader}><Ionicons name="return-down-back-outline" size={25} color={colors.success} /><View style={styles.reworkCopy}><Text style={styles.reworkTitle}>تعداد دستگاه مرجوعی</Text><Text style={styles.reworkText}>{reworkJob.item_name} · از {faNumber(reworkJob.quantity)} عدد موجود</Text></View></View><Field label="تعداد مرجوعی" value={reworkQuantity} onChangeText={(value) => setReworkQuantity(value.replace(/\D/g, "").slice(0, 3))} keyboardType="numeric" /><View style={styles.reworkActions}><Button title="انصراف" tone="secondary" onPress={() => { setReworkJob(null); setReworkQuantity(""); }} disabled={Boolean(linkingId)} style={styles.reworkAction} /><Button title="ساخت لینک مرجوعی" icon="return-down-back-outline" onPress={submitRework} loading={linkingId === reworkJob.id} style={styles.reworkAction} /></View></Card> : null}
     {visibleJobs.length === 0 ? <Card><Empty title={section === "rework" ? "دستگاهی برای مرجوعی نیست" : "ارجاعی ثبت نشده است"} description={section === "rework" ? "دستگاه تحویل‌گرفته‌شده‌ای که هنوز خراب است را از این بخش مرجوع کنید." : "ارجاع جدید ثبت کنید و لینک تحویل را برای تعمیرکار بفرستید."} /></Card> : visibleJobs.map((job) => {
       const actionType = section === "rework" && (job.status === "returned" || job.status === "awaiting_rework") ? "rework" : job.status === "awaiting_handover" ? "handover" : job.status === "with_technician" || job.status === "awaiting_return" ? "return" : null;
       const title = actionType === "handover" ? "ارسال لینک تحویل" : actionType === "return" ? job.status === "with_technician" ? "ساخت لینک تحویل به شما" : "ارسال دوباره لینک تحویل" : actionType === "rework" ? job.status === "returned" ? "مرجوع کردن به تعمیرکار" : "ارسال دوباره لینک مرجوعی" : "";
-      const reworkSelectable = section === "rework" && (job.status === "returned" || job.status === "awaiting_rework");
-      const reworkSelected = selectedReworkIds.includes(job.id);
-      return <Card key={job.id} style={reworkSelected ? styles.selectedCard : undefined}>{reworkSelectable ? <Pressable accessibilityRole="checkbox" accessibilityState={{ checked: reworkSelected }} onPress={() => toggleRework(job.id)} style={[styles.reworkCheck, reworkSelected && styles.reworkCheckActive]}><Ionicons name={reworkSelected ? "checkbox" : "square-outline"} size={21} color={reworkSelected ? colors.success : colors.muted} /><Text style={styles.reworkCheckText}>{reworkSelected ? "انتخاب شده" : "انتخاب برای مرجوعی"}</Text></Pressable> : null}<View style={styles.head}><Badge text={statusLabels[job.status]} tone={job.status === "returned" ? "success" : "warning"} /><View><Text style={styles.title}>{job.technician_name}</Text><Text style={styles.meta}>{job.item_name} · {job.customer_name} · {faNumber(job.quantity)}</Text></View></View>{job.promised_return_at && job.status !== "returned" ? <View style={styles.promised}><Ionicons name="calendar-outline" size={17} color={colors.success} /><Text style={styles.promisedText}>تاریخ تحویل اعلام‌شده: {new Intl.DateTimeFormat("fa-IR", { dateStyle: "medium" }).format(new Date(job.promised_return_at))}</Text></View> : null}{actionType && actionType !== "rework" ? <Button title={title} icon={actionType === "handover" ? "share-social-outline" : "return-down-back-outline"} onPress={() => share(job, actionType)} /> : null}</Card>;
+      return <Card key={job.id}><View style={styles.head}><Badge text={statusLabels[job.status]} tone={job.status === "returned" ? "success" : "warning"} /><View><Text style={styles.title}>{job.technician_name}</Text><Text style={styles.meta}>{job.item_name} · {job.customer_name} · {faNumber(job.quantity)} عدد</Text></View></View>{job.promised_return_at && job.status !== "returned" ? <View style={styles.promised}><Ionicons name="calendar-outline" size={17} color={colors.success} /><Text style={styles.promisedText}>تاریخ تحویل اعلام‌شده: {new Intl.DateTimeFormat("fa-IR", { dateStyle: "medium" }).format(new Date(job.promised_return_at))}</Text></View> : null}{actionType && actionType !== "rework" ? <Button title={title} icon={actionType === "handover" ? "share-social-outline" : "return-down-back-outline"} onPress={() => share(job, actionType)} loading={linkingId === job.id} /> : null}{actionType === "rework" ? <Button title={title} icon="return-down-back-outline" onPress={() => job.status === "awaiting_rework" ? void share(job, "rework", job.quantity) : (setError(""), setReworkQuantity(""), setReworkJob(job))} loading={linkingId === job.id} /> : null}</Card>;
     })}
   </Screen>;
 }
@@ -166,10 +157,11 @@ const styles = StyleSheet.create({
   meta: { fontSize: 11, color: colors.muted, textAlign: "right", marginTop: 4 },
   promised: { padding: 11, borderRadius: 13, backgroundColor: colors.successSoft, flexDirection: "row-reverse", alignItems: "center", gap: 7 },
   promisedText: { flex: 1, color: colors.success, fontSize: 11, fontWeight: "700", textAlign: "right", writingDirection: "rtl" },
-  selectionTitle: { fontSize: 14, fontWeight: "900", textAlign: "right" },
-  selectionText: { color: colors.muted, fontSize: 11, textAlign: "right" },
-  selectedCard: { borderColor: colors.success, backgroundColor: colors.successSoft },
-  reworkCheck: { padding: 10, borderRadius: 12, borderWidth: 1, borderColor: colors.border, flexDirection: "row-reverse", alignItems: "center", gap: 8 },
-  reworkCheckActive: { borderColor: colors.success, backgroundColor: colors.successSoft },
-  reworkCheckText: { flex: 1, color: colors.text, fontSize: 12, fontWeight: "800", textAlign: "right" },
+  reworkCard: { borderColor: "#C9DDCE", backgroundColor: "#F7FAF7" },
+  reworkHeader: { flexDirection: "row-reverse", alignItems: "center", gap: 10 },
+  reworkCopy: { flex: 1, alignItems: "flex-end" },
+  reworkTitle: { color: colors.text, fontSize: 15, fontWeight: "900", textAlign: "right" },
+  reworkText: { color: colors.muted, fontSize: 12, marginTop: 4, textAlign: "right" },
+  reworkActions: { flexDirection: "row-reverse", gap: 8 },
+  reworkAction: { flex: 1 },
 });

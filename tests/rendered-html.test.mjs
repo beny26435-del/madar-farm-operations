@@ -18,7 +18,6 @@ test("فرم‌ها هیچ مقدار اولیه‌ای ندارند", async () 
   assert.doesNotMatch(source, /defaultValue=/);
   assert.doesNotMatch(source, /defaultValues:/);
   assert.match(source, /autoComplete="off"/);
-  assert.doesNotMatch(source, /type="time"/);
   assert.doesNotMatch(source, /مثلاً|example/i);
 });
 
@@ -173,9 +172,26 @@ test("تعمیرکار زمان تحویل به مجموعه را مشخص می�
     assert.match(source, /مرجوعی (?:دستگاه )?خراب/);
     assert.match(source, /مرجوع کردن به تعمیرکار/);
   }
-  assert.match(web, /selectedReworkIds/);
-  assert.match(mobile, /selectedReworkIds/);
-  assert.match(web, /فقط موارد انتخاب‌شده/);
+  const token = await read("lib/technician-confirmations/token.ts");
+  assert.match(web, /تعداد مرجوعی/);
+  assert.match(mobile, /تعداد مرجوعی/);
+  assert.doesNotMatch(web, /selectedReworkIds/);
+  assert.doesNotMatch(mobile, /selectedReworkIds/);
+  assert.match(token, /remainingQuantity = source\.quantity - input\.quantity/);
+  assert.match(token, /status: "awaiting_rework"/);
+  assert.match(token, /delete\(\)\.eq\("id", splitJob\.id\)/);
+});
+
+test("ساعت گزارش روزانه در وب و اپ انتخابی است و تایپ دستی ندارد", async () => {
+  const web = await read("components/daily-report-form.tsx");
+  const mobile = await read("mobile/src/app/(tabs)/report.tsx");
+  assert.match(web, /type="time"/);
+  assert.match(web, /step="300"/);
+  assert.doesNotMatch(web, /time-text-input" type="text"/);
+  assert.match(mobile, /function TimePickerField/);
+  assert.match(mobile, /ساعت را انتخاب کنید/);
+  assert.match(mobile, /دقیقه را انتخاب کنید/);
+  assert.doesNotMatch(mobile, /normalizeTime/);
 });
 
 test("تعمیرکارهای ثابت قابل انتخاب هستند و نام آزاد فقط برای گزینه دیگر نمایش داده می‌شود", async () => {

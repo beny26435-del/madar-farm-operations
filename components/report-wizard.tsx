@@ -17,7 +17,7 @@ function Field({ label, placeholder, type = "text", hint }: { label: string; pla
 }
 
 function TimeField({ label }: { label: string }) {
-  return <label className="field"><span className="field-label">{label}<span className="field-hint">۲۴ ساعته</span></span><input className="input time-text-input" type="text" inputMode="numeric" autoComplete="off" maxLength={5} dir="ltr" /><small className="field-help">ساعت و دقیقه را کامل وارد کنید.</small></label>;
+  return <label className="field"><span className="field-label">{label}<span className="field-hint">۲۴ ساعته</span></span><span className="time-input-wrap time-picker-wrap"><input className="input time-picker-input" type="time" step="300" autoComplete="off" dir="ltr" /></span></label>;
 }
 
 function TextField({ label, placeholder, hint }: { label: string; placeholder: string; hint?: string }) {
@@ -49,7 +49,7 @@ export function ReportWizard({ type }: { type: "daily" | "maintenance" }) {
 
   const content = useMemo(() => {
     if (!maintenance) {
-      if (step === 0) return <><div className="form-intro-icon"><CalendarDays /></div><div className="form-grid"><Field label="نام کارمند" placeholder="نام کارمند را وارد کنید" /><Field label="تاریخ گزارش" type="date" /><div className="time-row form-grid-wide"><TimeField label="ساعت ورود" /><TimeField label="ساعت خروج" /></div></div><div className="form-note"><ShieldCheck /><p><strong>ورود ساعت ساده و دستی است.</strong><span>ساعت شروع و پایان کار را خودتان با قالب ۲۴ ساعته تایپ کنید.</span></p></div></>;
+      if (step === 0) return <><div className="form-intro-icon"><CalendarDays /></div><div className="form-grid"><Field label="نام کارمند" placeholder="نام کارمند را وارد کنید" /><Field label="تاریخ گزارش" type="date" /><div className="time-row form-grid-wide"><TimeField label="ساعت ورود" /><TimeField label="ساعت خروج" /></div></div><div className="form-note"><ShieldCheck /><p><strong>انتخاب ساعت سریع و دقیق است.</strong><span>ساعت شروع و پایان کار را از انتخاب‌گر ۲۴ ساعته مشخص کنید.</span></p></div></>;
       if (step === 1) return <><div className="form-intro-icon"><FileText /></div><TextField label="فعالیت‌های انجام‌شده" placeholder="فعالیت‌های انجام‌شده را وارد کنید" hint="الزامی" /><div className="writing-tip"><span>پیشنهاد</span> فعالیت‌ها را کوتاه، روشن و به ترتیب انجام بنویسید تا بررسی سریع‌تر شود.</div></>;
       if (step === 2) return <><div className="form-intro-icon"><Wrench /></div><TextField label="مشکلات مشاهده‌شده" placeholder="مشکلات مشاهده‌شده را وارد کنید" /><TextField label="اقدامات انجام‌شده" placeholder="اقدامات انجام‌شده را وارد کنید" /></>;
       return <><div className="form-intro-icon"><ImageIcon /></div><UploadField /><TextField label="توضیحات تکمیلی" placeholder="توضیحات تکمیلی را وارد کنید" hint="اختیاری" /><div className="file-attachment"><Paperclip /><div><strong>فایل پیوست</strong><small>PDF، Word یا Excel تا ۱۰ مگابایت</small></div><label className="button button-secondary">انتخاب فایل<input type="file" hidden /></label></div></>;
