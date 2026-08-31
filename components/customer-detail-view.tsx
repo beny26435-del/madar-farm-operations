@@ -5,6 +5,7 @@ import Image from "next/image";
 import { ArrowRight, CheckCircle2, Clipboard, ContactRound, ImagePlus, Link2, PackageCheck, Plus, Send, Wrench, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { prepareImageForUpload } from "@/lib/images/prepare-upload";
 import { Dialog, EmptyState, ErrorState, StatusBadge } from "./ui";
 
 type Customer = { id: string; full_name: string; phone: string | null; created_at: string };
@@ -31,7 +32,7 @@ export function CustomerDetailView({ customer, items, confirmations, loadError }
 
   function choosePhoto(file: File | null) {
     if (!file) { setPhoto(null); setPhotoPreview(null); return; }
-    if (!["image/jpeg", "image/png", "image/webp", "image/heic", "image/heif"].includes(file.type) || file.size > 8 * 1024 * 1024) { setError("عکس دستگاه باید حداکثر ۸ مگابایت باشد."); return; }
+    if (!["image/jpeg", "image/png", "image/webp", "image/heic", "image/heif"].includes(file.type) || file.size > 20 * 1024 * 1024) { setError("فایل انتخاب‌شده باید تصویر معتبر باشد."); return; }
     const reader = new FileReader();
     reader.onload = () => { setPhoto(file); setPhotoPreview(typeof reader.result === "string" ? reader.result : null); };
     reader.readAsDataURL(file); setError(null);
@@ -44,7 +45,8 @@ export function CustomerDetailView({ customer, items, confirmations, loadError }
     if (!Number.isInteger(normalizedQuantity) || normalizedQuantity < 1 || normalizedQuantity > 999) { setError("تعداد را درست وارد کنید."); return; }
     setPending(true); setError(null);
     try {
-      const payload = new FormData(); payload.append("item", JSON.stringify({ itemName, quantity: normalizedQuantity })); if (photo) payload.append("device-photo", photo);
+      const preparedPhoto = photo ? await prepareImageForUpload(photo, 3_200_000) : null;
+      const payload = new FormData(); payload.append("item", JSON.stringify({ itemName, quantity: normalizedQuantity })); if (preparedPhoto) payload.append("device-photo", preparedPhoto);
       const response = await fetch(`/api/customers/${customer.id}/items`, { method: "POST", body: payload });
       const result = await response.json().catch(() => ({ message: "پاسخ سرور معتبر نیست." })) as { message?: string; confirmationUrl?: string | null };
       if (!response.ok) { setError(result.message ?? "ثبت وسیله انجام نشد."); return; }
@@ -52,7 +54,7 @@ export function CustomerDetailView({ customer, items, confirmations, loadError }
       setItemName(""); setQuantity(""); setPhoto(null); setPhotoPreview(null);
       if (result.confirmationUrl) setShareLink({ url: result.confirmationUrl, itemName: savedName, type: "intake" });
       router.refresh();
-    } catch { setError("ارتباط با سرور برقرار نشد."); } finally { setPending(false); }
+    } catch (reason) { setError(reason instanceof Error && reason.message.startsWith("image_") ? "آماده‌سازی عکس انجام نشد؛ تصویر دیگری انتخاب کنید." : "ارتباط با سرور برقرار نشد."); } finally { setPending(false); }
   }
 
   async function createConfirmationLink(item: RepairItem, type: "intake" | "delivery") {
@@ -92,7 +94,7 @@ export function CustomerDetailView({ customer, items, confirmations, loadError }
   return <div className="app-page customer-detail-page"><div className="page-container">
     <div className="customer-detail-top"><Link href="/customers" className="back-link"><ArrowRight /> مشتریان</Link></div>
     <section className="customer-profile surface"><div className="customer-profile-main"><span><ContactRound /></span><div><small>پرونده مشتری</small><h1>{customer.full_name}</h1>{customer.phone && <a href={`tel:${customer.phone}`} dir="ltr">{customer.phone}</a>}</div></div><div className="customer-profile-stats"><article><span>در حال تعمیر</span><strong>{activeItems.length.toLocaleString("fa-IR")}</strong></article><article><span>تحویل داده‌شده</span><strong>{deliveredItems.length.toLocaleString("fa-IR")}</strong></article></div></section>
-    <div className="customer-detail-layout"><section className="surface repair-intake-card"><header><span><Plus /></span><div><h2>ثبت وسیله یا قطعه</h2><p>نام، تعداد و در صورت نیاز عکس دستگاه را ثبت کنید.</p></div></header><form onSubmit={addItem}><label className="field"><span className="field-label">نام وسیله یا قطعه</span><input className="input" autoComplete="off" value={itemName} onChange={(event) => { setItemName(event.target.value); setError(null); }} /></label><label className="field"><span className="field-label">تعداد</span><input className="input" inputMode="numeric" autoComplete="off" dir="ltr" value={quantity} onChange={(event) => { setQuantity(event.target.value.replace(/[^0-9۰-۹]/g, "")); setError(null); }} /></label>{photoPreview ? <div className="device-photo-preview"><Image src={photoPreview} alt="پیش‌نمایش عکس دستگاه" width={58} height={58} unoptimized /><div><strong>{photo?.name}</strong><small>عکس برای بارگذاری آماده است</small></div><button type="button" onClick={() => choosePhoto(null)} aria-label="حذف عکس"><X /></button></div> : <label className="device-photo-upload"><input type="file" accept="image/jpeg,image/png,image/webp,image/heic,image/heif" onChange={(event) => choosePhoto(event.target.files?.[0] ?? null)} /><ImagePlus /><span><strong>افزودن عکس دستگاه</strong><small>اختیاری · حداکثر ۸ مگابایت</small></span></label>}{error && <p className="report-form-error" role="alert">{error}</p>}<button className="button button-primary" disabled={pending}><Plus /> {pending ? "در حال ثبت..." : "ثبت برای تعمیر"}</button></form></section>
+    <div className="customer-detail-layout"><section className="surface repair-intake-card"><header><span><Plus /></span><div><h2>ثبت وسیله یا قطعه</h2><p>نام، تعداد و در صورت نیاز عکس دستگاه را ثبت کنید.</p></div></header><form onSubmit={addItem}><label className="field"><span className="field-label">نام وسیله یا قطعه</span><input className="input" autoComplete="off" value={itemName} onChange={(event) => { setItemName(event.target.value); setError(null); }} /></label><label className="field"><span className="field-label">تعداد</span><input className="input" inputMode="numeric" autoComplete="off" dir="ltr" value={quantity} onChange={(event) => { setQuantity(event.target.value.replace(/[^0-9۰-۹]/g, "")); setError(null); }} /></label>{photoPreview ? <div className="device-photo-preview"><Image src={photoPreview} alt="پیش‌نمایش عکس دستگاه" width={58} height={58} unoptimized /><div><strong>{photo?.name}</strong><small>عکس برای بارگذاری آماده است</small></div><button type="button" onClick={() => choosePhoto(null)} aria-label="حذف عکس"><X /></button></div> : <label className="device-photo-upload"><input type="file" accept="image/jpeg,image/png,image/webp,image/heic,image/heif" onChange={(event) => choosePhoto(event.target.files?.[0] ?? null)} /><ImagePlus /><span><strong>افزودن عکس دستگاه</strong><small>اختیاری · پیش از ارسال بهینه می‌شود</small></span></label>}{error && <p className="report-form-error" role="alert">{error}</p>}<button className="button button-primary" disabled={pending}><Plus /> {pending ? "در حال ثبت..." : "ثبت برای تعمیر"}</button></form></section>
       <section className="surface repair-history-card"><header><div><h2>سوابق تعمیرات مشتری</h2><p>موارد در حال تعمیر و تحویل‌داده‌شده جدا نمایش داده می‌شوند.</p></div></header>{loadError ? <ErrorState /> : items.length === 0 ? <EmptyState title="هنوز موردی ثبت نشده است" description="نخستین وسیله یا قطعه را از فرم کناری ثبت کنید." /> : <div className="repair-history-groups">{activeItems.length > 0 && <section><h3><Wrench /> در حال تعمیر <span>{activeItems.length.toLocaleString("fa-IR")}</span></h3><div>{activeItems.map(renderItem)}</div></section>}{deliveredItems.length > 0 && <section><h3><PackageCheck /> تحویل داده‌شده <span>{deliveredItems.length.toLocaleString("fa-IR")}</span></h3><div>{deliveredItems.map(renderItem)}</div></section>}</div>}</section>
     </div>
   </div><Dialog open={Boolean(shareLink)} onClose={() => { setShareLink(null); setCopied(false); }} title={shareLink?.type === "delivery" ? "لینک تأیید تحویل" : "لینک تأیید دریافت"} description="این لینک را برای مشتری بفرستید تا مشخصات وسیله را ببیند و تأیید کند." mark={<Link2 />}>{shareLink && <div className="confirmation-share-box"><div dir="ltr">{shareLink.url}</div><button className="button button-secondary" onClick={copyConfirmationLink}><Clipboard />{copied ? "کپی شد" : "کپی لینک"}</button><button className="button button-primary" onClick={shareConfirmationLink}><Send /> ارسال برای مشتری</button></div>}</Dialog></div>;

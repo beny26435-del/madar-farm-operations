@@ -165,6 +165,7 @@ test("تعمیرکار زمان تحویل به مجموعه را مشخص می�
   assert.doesNotMatch(confirmation, /type="time"/);
   assert.match(confirmation, /چه تاریخی دستگاه را به مجموعه تحویل می‌دهید/);
   assert.match(confirmation, /jalali-picker-backdrop/);
+  assert.match(confirmation, /position: "fixed"/);
   assert.match(confirmation, /formatDate\(confirmation\.requestedAt\)/);
   assert.match(confirmationApi, /p_promised_return_at/);
   for (const source of [web, mobile]) {
@@ -172,6 +173,9 @@ test("تعمیرکار زمان تحویل به مجموعه را مشخص می�
     assert.match(source, /مرجوعی (?:دستگاه )?خراب/);
     assert.match(source, /مرجوع کردن به تعمیرکار/);
   }
+  assert.match(web, /selectedReworkIds/);
+  assert.match(mobile, /selectedReworkIds/);
+  assert.match(web, /فقط موارد انتخاب‌شده/);
 });
 
 test("تعمیرکارهای ثابت قابل انتخاب هستند و نام آزاد فقط برای گزینه دیگر نمایش داده می‌شود", async () => {
@@ -363,6 +367,7 @@ test("ثبت تعمیرات مشتری، وسیله، تعداد و عکس اخ�
   const api = await read("app/api/maintenance-intakes/route.ts");
   const migration = await read("supabase/migrations/202608090008_repair_intakes_and_quantities.sql");
   const photoMigration = await read("supabase/migrations/202608240013_repair_item_photos.sql");
+  const imagePreparation = await read("lib/images/prepare-upload.ts");
   const mobile = await read("mobile/src/app/(tabs)/maintenance.tsx");
   assert.match(page, /MaintenanceIntakeForm/);
   assert.match(listPage, /from\("customer_repair_intakes"\)/);
@@ -371,6 +376,8 @@ test("ثبت تعمیرات مشتری، وسیله، تعداد و عکس اخ�
   assert.match(form, /تعداد/);
   assert.match(form, /device-photo-/);
   assert.match(form, /افزودن عکس دستگاه/);
+  assert.match(form, /prepareImageForUpload/);
+  assert.match(imagePreparation, /canvas\.toBlob/);
   assert.doesNotMatch(form, /اقدام انجام‌شده|شرح فنی|شرح وضعیت/);
   assert.match(api, /from\("customer_repair_intakes"\)\.insert/);
   assert.match(api, /from\("customer_repair_items"\)\.insert/);
@@ -383,6 +390,7 @@ test("ثبت تعمیرات مشتری، وسیله، تعداد و عکس اخ�
   assert.match(photoMigration, /'repair-item-photos'/);
   assert.match(mobile, /pickPhoto/);
   assert.match(mobile, /device-photo-/);
+  assert.match(mobile, /totalPhotoSize/);
 });
 
 test("صف بررسی، تصمیم مدیر را در گزارش و تاریخچه ثبت می‌کند", async () => {

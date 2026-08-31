@@ -33,8 +33,9 @@ export function TechnicianJobsView({ initialJobs, devices: initialDevices, loadE
   const [saving, setSaving] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
   const [linkingId, setLinkingId] = useState<string | null>(null);
-  const [linkResult, setLinkResult] = useState<{ url: string; title: string } | null>(null);
+  const [linkResult, setLinkResult] = useState<{ links: Array<{ url: string; label: string }>; title: string } | null>(null);
   const [copied, setCopied] = useState(false);
+  const [selectedReworkIds, setSelectedReworkIds] = useState<string[]>([]);
 
   const normalized = query.trim().toLocaleLowerCase("fa");
   const sectionJobs = jobs.filter((job) => section === "flow" ? job.status !== "awaiting_rework" : job.status === "returned" || job.status === "awaiting_rework" || job.rework_count > 0);
@@ -62,18 +63,42 @@ export function TechnicianJobsView({ initialJobs, devices: initialDevices, loadE
       if (type === "return") setJobs((current) => current.map((item) => item.id === job.id ? { ...item, status: "awaiting_return" } : item));
       if (type === "rework") setJobs((current) => current.map((item) => item.id === job.id ? { ...item, status: "awaiting_rework" } : item));
       const title = type === "handover" ? "لینک تأیید تحویل به تعمیرکار" : type === "return" ? "لینک تأیید تحویل از تعمیرکار" : "لینک تأیید مرجوعی به تعمیرکار";
-      setCopied(false); setLinkResult({ url: result.confirmationUrl, title });
+      setCopied(false); setLinkResult({ links: [{ url: result.confirmationUrl, label: `${job.item_name} · ${job.customer_name}` }], title });
     } catch { setFormError("ارتباط با سامانه برقرار نشد."); } finally { setLinkingId(null); }
+  }
+
+  function toggleRework(jobId: string) {
+    setSelectedReworkIds((current) => current.includes(jobId) ? current.filter((id) => id !== jobId) : [...current, jobId]);
+  }
+
+  async function createSelectedReworkLinks() {
+    const selectedJobs = jobs.filter((job) => selectedReworkIds.includes(job.id) && (job.status === "returned" || job.status === "awaiting_rework"));
+    if (!selectedJobs.length) return;
+    setLinkingId("selected-rework"); setFormError(null);
+    const links: Array<{ url: string; label: string }> = [];
+    try {
+      for (const job of selectedJobs) {
+        const response = await fetch(`/api/technician-jobs/${job.id}/confirmation`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ type: "rework" }) });
+        const result = await response.json().catch(() => ({ message: "پاسخ سرور معتبر نیست." })) as { confirmationUrl?: string; message?: string };
+        if (!response.ok || !result.confirmationUrl) throw new Error(result.message ?? "ساخت لینک مرجوعی انجام نشد.");
+        links.push({ url: result.confirmationUrl, label: `${job.item_name} · ${job.customer_name}` });
+      }
+      setJobs((current) => current.map((job) => selectedReworkIds.includes(job.id) ? { ...job, status: "awaiting_rework" } : job));
+      setSelectedReworkIds([]); setCopied(false); setLinkResult({ links, title: "لینک‌های تأیید مرجوعی انتخاب‌شده" });
+    } catch (reason) {
+      setFormError(reason instanceof Error ? reason.message : "ساخت لینک‌های مرجوعی انجام نشد.");
+      if (links.length) setLinkResult({ links, title: "لینک‌های مرجوعی ساخته‌شده" });
+    } finally { setLinkingId(null); }
   }
 
   async function copyLink() {
     if (!linkResult) return;
-    await navigator.clipboard.writeText(linkResult.url); setCopied(true);
+    await navigator.clipboard.writeText(linkResult.links.map((link) => `${link.label}\n${link.url}`).join("\n\n")); setCopied(true);
   }
 
   async function shareLink() {
     if (!linkResult) return;
-    if (navigator.share) await navigator.share({ title: linkResult.title, url: linkResult.url }); else await copyLink();
+    if (navigator.share) await navigator.share({ title: linkResult.title, text: linkResult.links.map((link) => `${link.label}\n${link.url}`).join("\n\n") }); else await copyLink();
   }
 
   return <div className="app-page technician-page"><div className="page-container">
@@ -82,16 +107,19 @@ export function TechnicianJobsView({ initialJobs, devices: initialDevices, loadE
     <section className="surface technician-panel">
       <div className="technician-toolbar"><div className="technician-tabs" role="tablist" aria-label="گردش دستگاه‌ها"><button role="tab" aria-selected={section === "flow"} className={section === "flow" ? "active" : ""} onClick={() => setSection("flow")}><Send />گردش دستگاه <span>{jobs.filter((job) => job.status !== "awaiting_rework").length.toLocaleString("fa-IR")}</span></button><button role="tab" aria-selected={section === "rework"} className={section === "rework" ? "active" : ""} onClick={() => setSection("rework")}><RotateCcw />مرجوعی دستگاه خراب <span>{jobs.filter((job) => job.status === "returned" || job.status === "awaiting_rework" || job.rework_count > 0).length.toLocaleString("fa-IR")}</span></button></div><label><Search /><input autoComplete="off" aria-label="جست‌وجوی ارجاع‌ها" value={query} onChange={(event) => setQuery(event.target.value)} /></label></div>
       {formError && !formOpen && <p className="technician-page-error" role="alert">{formError}</p>}
+      {section === "rework" && visible.some((job) => job.status === "returned" || job.status === "awaiting_rework") && <div className="technician-rework-selection"><div><strong>دستگاه‌های مرجوعی را انتخاب کنید</strong><small>فقط موارد انتخاب‌شده برای تعمیرکار ارسال می‌شوند.</small></div><button className="button button-primary" disabled={!selectedReworkIds.length || linkingId === "selected-rework"} onClick={createSelectedReworkLinks}><RotateCcw />{linkingId === "selected-rework" ? "در حال ساخت..." : `ساخت لینک ${selectedReworkIds.length.toLocaleString("fa-IR")} مورد`}</button></div>}
       {loadError ? <ErrorState /> : visible.length === 0 ? <EmptyState title={query ? "نتیجه‌ای پیدا نشد" : section === "rework" ? "دستگاهی برای مرجوعی وجود ندارد" : "ارجاعی ثبت نشده است"} description={query ? "عبارت جست‌وجو را تغییر دهید." : section === "rework" ? "دستگاهی که از تعمیرکار تحویل گرفته‌اید را در صورت خراب بودن، از اینجا مرجوع کنید." : "ارجاع جدید ثبت کنید و لینک تحویل را برای تعمیرکار بفرستید."} action={!query && section === "flow" ? <button className="button button-primary" onClick={() => setFormOpen(true)}><Plus />ارجاع جدید</button> : undefined} /> : <div className="technician-grid">{visible.map((job) => {
         const actionType = section === "rework" && (job.status === "returned" || job.status === "awaiting_rework") ? "rework" : job.status === "awaiting_handover" ? "handover" : job.status === "with_technician" || job.status === "awaiting_return" ? "return" : null;
         const actionLabel = actionType === "handover" ? "لینک تحویل" : actionType === "return" ? job.status === "with_technician" ? "ساخت لینک تحویل به شما" : "ارسال دوباره لینک تحویل" : actionType === "rework" ? job.status === "returned" ? "مرجوع کردن به تعمیرکار" : "ارسال دوباره لینک مرجوعی" : "";
-        return <article className="technician-card" key={job.id}><header><span><UserRound /></span><div><small>تعمیرکار</small><strong>{job.technician_name}</strong></div><StatusBadge tone={statusTone[job.status]}>{statusLabel[job.status]}</StatusBadge></header><div className="technician-device"><Package /><div><small>دستگاه مشتری {job.customer_name}</small><strong>{job.item_name}</strong></div><em>{job.quantity.toLocaleString("fa-IR")} عدد</em></div>{job.promised_return_at && job.status !== "returned" && <div className="technician-promised"><CalendarClock /><span>تاریخ اعلام‌شده تحویل</span><strong>{formatDateOnly(job.promised_return_at)}</strong></div>}<footer><time>{formatDate(job.last_reworked_at ?? job.returned_at ?? job.handed_over_at ?? job.created_at)}</time>{actionType && <button onClick={() => createLink(job, actionType)} disabled={linkingId === job.id}>{linkingId === job.id ? <LoaderCircle className="spinning" /> : actionType === "handover" ? <Send /> : <RotateCcw />}{actionLabel}</button>}{!actionType && <span><CheckCircle2 />دستگاه دریافت شد</span>}</footer></article>;
+        const reworkSelectable = section === "rework" && (job.status === "returned" || job.status === "awaiting_rework");
+        const reworkSelected = selectedReworkIds.includes(job.id);
+        return <article className={`technician-card ${reworkSelected ? "selected-for-rework" : ""}`} key={job.id}>{reworkSelectable && <button type="button" className="technician-rework-check" aria-pressed={reworkSelected} onClick={() => toggleRework(job.id)}><span>{reworkSelected && <Check />}</span>{reworkSelected ? "انتخاب شده" : "انتخاب برای مرجوعی"}</button>}<header><span><UserRound /></span><div><small>تعمیرکار</small><strong>{job.technician_name}</strong></div><StatusBadge tone={statusTone[job.status]}>{statusLabel[job.status]}</StatusBadge></header><div className="technician-device"><Package /><div><small>دستگاه مشتری {job.customer_name}</small><strong>{job.item_name}</strong></div><em>{job.quantity.toLocaleString("fa-IR")} عدد</em></div>{job.promised_return_at && job.status !== "returned" && <div className="technician-promised"><CalendarClock /><span>تاریخ اعلام‌شده تحویل</span><strong>{formatDateOnly(job.promised_return_at)}</strong></div>}<footer><time>{formatDate(job.last_reworked_at ?? job.returned_at ?? job.handed_over_at ?? job.created_at)}</time>{actionType && actionType !== "rework" && <button onClick={() => createLink(job, actionType)} disabled={linkingId === job.id}>{linkingId === job.id ? <LoaderCircle className="spinning" /> : actionType === "handover" ? <Send /> : <RotateCcw />}{actionLabel}</button>}{!actionType && <span><CheckCircle2 />دستگاه دریافت شد</span>}</footer></article>;
       })}</div>}
     </section>
   </div>
 
   <Dialog open={formOpen} onClose={() => !saving && setFormOpen(false)} title="ارجاع دستگاه به تعمیرکار" description="دستگاه، تعمیرکار و تعداد را مشخص کنید." mark={<HardHat />}><form className="technician-create-form" onSubmit={createJob}><label className="field"><span className="field-label">دستگاه</span><span className="input-wrap"><select className="select" autoComplete="off" value={repairItemId} onChange={(event) => { setRepairItemId(event.target.value); setQuantity("1"); }} required><option value="">انتخاب دستگاه</option>{devices.map((device) => <option key={device.id} value={device.id}>{device.itemName} · {device.customerName} · {device.availableQuantity.toLocaleString("fa-IR")} عدد آزاد</option>)}</select></span></label><label className="field"><span className="field-label">تعمیرکار</span><span className="input-wrap"><select className="select" autoComplete="off" value={technicianSelection} onChange={(event) => { const value = event.target.value; setTechnicianSelection(value); setTechnicianName(value === customTechnicianValue ? "" : value); }} required><option value="">انتخاب تعمیرکار</option>{technicianOptions.map((name) => <option key={name} value={name}>{name}</option>)}<option value={customTechnicianValue}>تعمیرکار دیگر</option></select></span></label>{technicianSelection === customTechnicianValue && <label className="field"><span className="field-label">نام تعمیرکار دیگر</span><input className="input" autoComplete="off" value={technicianName} onChange={(event) => setTechnicianName(event.target.value)} required /></label>}<label className="field"><span className="field-label">تعداد</span><input className="input" type="number" inputMode="numeric" min="1" max={selectedDevice?.availableQuantity ?? 999} autoComplete="off" value={quantity} onChange={(event) => setQuantity(event.target.value)} required /></label>{formError && <p className="technician-form-error" role="alert">{formError}</p>}<div className="dialog-actions"><button type="button" className="button button-ghost" onClick={() => setFormOpen(false)} disabled={saving}>انصراف</button><button className="button button-primary" disabled={saving || !devices.length}>{saving ? <LoaderCircle className="spinning" /> : <Plus />}{saving ? "در حال ثبت..." : "ثبت ارجاع"}</button></div></form></Dialog>
 
-  <Dialog open={Boolean(linkResult)} onClose={() => setLinkResult(null)} title={linkResult?.title ?? "لینک تأیید"} description="این لینک را برای تعمیرکار ارسال کنید." mark={<Link2 />}><div className="technician-link-box"><div dir="ltr">{linkResult?.url}</div><button className="button button-secondary" onClick={copyLink}>{copied ? <Check /> : <Clipboard />}{copied ? "کپی شد" : "کپی لینک"}</button><button className="button button-primary" onClick={shareLink}><Send />ارسال لینک</button></div></Dialog>
+  <Dialog open={Boolean(linkResult)} onClose={() => setLinkResult(null)} title={linkResult?.title ?? "لینک تأیید"} description="این لینک‌ها را برای تعمیرکار ارسال کنید." mark={<Link2 />}><div className="technician-link-box">{linkResult?.links.map((link) => <div className="technician-generated-link" key={link.url}><strong>{link.label}</strong><span dir="ltr">{link.url}</span></div>)}<button className="button button-secondary" onClick={copyLink}>{copied ? <Check /> : <Clipboard />}{copied ? "کپی شد" : "کپی لینک‌ها"}</button><button className="button button-primary" onClick={shareLink}><Send />ارسال لینک‌ها</button></div></Dialog>
   </div>;
 }

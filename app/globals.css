@@ -683,6 +683,16 @@ button { cursor: pointer; }
 .technician-grid { padding: 14px; display: grid; grid-template-columns: repeat(auto-fill,minmax(310px,1fr)); gap: 11px; }
 .technician-card { min-width: 0; padding: 15px; border: 1px solid var(--border); border-radius: 13px; background: #fff; display: grid; gap: 14px; }
 .technician-card:hover { border-color: #bfcac1; box-shadow: 0 7px 20px rgba(28,44,34,.05); }
+.technician-card.selected-for-rework { border-color: #789080; background: #f4f8f4; box-shadow: inset 0 0 0 1px #789080; }
+.technician-rework-selection { margin: 14px 14px 0; padding: 13px 14px; border: 1px solid #dce5dd; border-radius: 12px; background: #f5f8f5; display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.technician-rework-selection > div { display: grid; gap: 3px; }
+.technician-rework-selection strong { font-size: 10px; }
+.technician-rework-selection small { color: var(--muted-foreground); font-size: 8px; }
+.technician-rework-check { min-height: 34px; padding: 0 9px; border: 0; border-radius: 8px; color: #617168; background: #eef2ef; display: flex; align-items: center; gap: 7px; font-family: inherit; font-size: 8px; font-weight: 750; }
+.technician-rework-check > span { width: 18px; height: 18px; border: 1px solid #aebbb2; border-radius: 5px; background: #fff; display: grid; place-items: center; }
+.technician-rework-check[aria-pressed="true"] { color: #44604e; background: #e1ece3; }
+.technician-rework-check[aria-pressed="true"] > span { border-color: var(--primary); color: #fff; background: var(--primary); }
+.technician-rework-check svg { width: 11px; }
 .technician-card > header { display: flex; align-items: center; gap: 10px; }
 .technician-card > header > span:first-child { width: 40px; height: 40px; flex: 0 0 auto; border-radius: 11px; color: #556b5d; background: #e9efea; display: grid; place-items: center; }
 .technician-card > header > span:first-child svg { width: 18px; }
@@ -711,6 +721,9 @@ button { cursor: pointer; }
 .technician-form-error { margin: 0; padding: 9px 10px; border-radius: 8px; color: #923e35; background: #fff2ef; font-size: 9px; }
 .technician-link-box { margin-top: 18px; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
 .technician-link-box > div { grid-column: 1 / -1; padding: 11px; overflow-wrap: anywhere; border: 1px solid var(--border); border-radius: 9px; color: #5c6c62; background: #f7f9f7; font-size: 8px; text-align: left; }
+.technician-link-box .technician-generated-link { display: grid; gap: 6px; text-align: right; }
+.technician-generated-link strong { color: var(--foreground); font-size: 9px; }
+.technician-generated-link span { color: #66736b; overflow-wrap: anywhere; font-size: 8px; text-align: left; }
 .technician-confirmation-card .confirmation-brand strong { direction: ltr; }
 
 /* User profile */
@@ -1429,6 +1442,8 @@ a.maintenance-intake-card:hover { border-color: #bcc8be; transform: translateY(-
   .technician-summary article { min-height: 63px; padding: 11px 13px; }
   .technician-toolbar { padding: 10px 12px; align-items: stretch; flex-direction: column; }
   .technician-toolbar label { width: 100%; }
+  .technician-rework-selection { align-items: stretch; flex-direction: column; }
+  .technician-rework-selection .button { width: 100%; }
   .technician-tabs { display: grid; grid-template-columns: 1fr 1fr; }
   .technician-tabs button { justify-content: center; }
   .technician-grid { grid-template-columns: 1fr; padding: 11px; }
