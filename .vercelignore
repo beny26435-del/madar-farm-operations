@@ -1,0 +1,12 @@
+.git
+.next
+.vinext
+.wrangler
+node_modules
+mobile
+android
+dist
+outputs
+screenshots
+work
+*.tsbuildinfo
