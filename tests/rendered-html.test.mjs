@@ -162,8 +162,9 @@ test("تعمیرکار زمان تحویل به مجموعه را مشخص می�
   const mobile = await read("mobile/src/app/technicians.tsx");
   assert.match(confirmation, /aria-label="تقویم شمسی"/);
   assert.match(confirmation, /parseJalaliDate/);
-  assert.match(confirmation, /type="time"/);
-  assert.match(confirmation, /چه زمانی دستگاه را به مجموعه تحویل می‌دهید/);
+  assert.doesNotMatch(confirmation, /type="time"/);
+  assert.match(confirmation, /چه تاریخی دستگاه را به مجموعه تحویل می‌دهید/);
+  assert.match(confirmation, /jalali-picker-backdrop/);
   assert.match(confirmation, /formatDate\(confirmation\.requestedAt\)/);
   assert.match(confirmationApi, /p_promised_return_at/);
   for (const source of [web, mobile]) {

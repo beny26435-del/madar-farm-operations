@@ -954,14 +954,13 @@ a.maintenance-intake-card:hover { border-color: #bcc8be; transform: translateY(-
 .confirmation-promised-field > header > div { min-width: 0; display: grid; gap: 3px; }
 .confirmation-promised-field > header strong { font-size: 11px; line-height: 1.8; }
 .confirmation-promised-field > header small { color: var(--muted-foreground); font-size: 8px; }
-.confirmation-promised-controls { display: grid; grid-template-columns: 1.35fr 1fr; gap: 9px; }
+.confirmation-promised-controls { display: grid; grid-template-columns: 1fr; gap: 9px; }
 .confirmation-promised-control { min-width: 0; display: grid; gap: 6px; }
 .confirmation-promised-control > span { color: #68786d; display: flex; align-items: center; gap: 5px; font-size: 8px; font-weight: 700; }
 .confirmation-promised-control > span svg { width: 13px; }
-.confirmation-promised-control input { box-sizing: border-box; width: 100%; min-width: 0; height: 45px; padding: 0 11px; border: 1px solid var(--border-strong); border-radius: 10px; outline: 0; color: var(--foreground); background: #fff; font-family: inherit; font-size: 11px; direction: ltr; color-scheme: light; }
-.confirmation-promised-control input:focus { border-color: #7f9585; box-shadow: 0 0 0 3px rgba(65,88,73,.08); }
 .confirmation-promised-date .jalali-picker-trigger { height: 45px; border-radius: 10px; font-size: 10px; }
-.confirmation-promised-date .jalali-picker-panel { right: 0; left: auto; }
+.confirmation-promised-date .jalali-picker-panel { position: fixed; z-index: 121; top: 50%; right: 50%; left: auto; width: min(calc(100vw - 32px),360px); transform: translate(50%,-50%); }
+.jalali-picker-backdrop { position: fixed; z-index: 120; inset: 0; border: 0; background: rgba(20,32,25,.26); backdrop-filter: blur(2px); }
 .jalali-days button:disabled { color: #c4cbc6; background: transparent; cursor: not-allowed; }
 .confirmation-meta { margin: 13px 26px 0; padding: 11px 2px; border-bottom: 1px solid #edf0ed; display: flex; align-items: center; justify-content: space-between; gap: 10px; }
 .confirmation-meta span { color: var(--subtle-foreground); font-size: 9px; }
@@ -1365,8 +1364,7 @@ a.maintenance-intake-card:hover { border-color: #bcc8be; transform: translateY(-
   .confirmation-items { margin-inline: 19px; }
   .confirmation-item { margin-inline: 0; }
   .confirmation-promised-field { margin-inline: 19px; }
-  .confirmation-promised-controls { grid-template-columns: 1fr; }
-  .confirmation-promised-date .jalali-picker-panel { right: 16px; left: 16px; }
+  .confirmation-promised-date .jalali-picker-panel { right: 50%; left: auto; width: min(calc(100vw - 28px),360px); }
   .confirmation-meta { margin-inline: 19px; }
   .confirmation-submit { width: calc(100% - 38px); margin-inline: 19px; }
   .review-summary { grid-template-columns: repeat(2,1fr); }

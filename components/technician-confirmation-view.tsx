@@ -26,26 +26,27 @@ function formatDate(value: string) {
   return new Intl.DateTimeFormat("fa-IR", { year: "numeric", month: "long", day: "numeric", hour: "2-digit", minute: "2-digit" }).format(new Date(value));
 }
 
-function localDateTimeParts(value: string | null) {
-  if (!value) return { year: "", month: "", day: "", time: "" };
+function formatDateOnly(value: string) {
+  return new Intl.DateTimeFormat("fa-IR", { year: "numeric", month: "long", day: "numeric" }).format(new Date(value));
+}
+
+function localDateParts(value: string | null) {
+  if (!value) return { year: "", month: "", day: "" };
   const parsed = new Date(value);
-  if (Number.isNaN(parsed.getTime())) return { year: "", month: "", day: "", time: "" };
-  const pad = (part: number) => String(part).padStart(2, "0");
+  if (Number.isNaN(parsed.getTime())) return { year: "", month: "", day: "" };
   const jalali = gregorianToJalali(parsed.getFullYear(), parsed.getMonth() + 1, parsed.getDate());
   return {
     year: String(jalali.year),
     month: String(jalali.month),
     day: String(jalali.day),
-    time: `${pad(parsed.getHours())}:${pad(parsed.getMinutes())}`,
   };
 }
 
 export function TechnicianConfirmationView({ token, confirmation }: { token: string; confirmation: Confirmation | null }) {
   const [confirmed, setConfirmed] = useState(Boolean(confirmation?.confirmedAt));
   const [confirmedAt, setConfirmedAt] = useState(confirmation?.confirmedAt ?? null);
-  const initialPromisedReturn = localDateTimeParts(confirmation?.promised_return_at ?? null);
+  const initialPromisedReturn = localDateParts(confirmation?.promised_return_at ?? null);
   const [promisedDate, setPromisedDate] = useState({ year: initialPromisedReturn.year, month: initialPromisedReturn.month, day: initialPromisedReturn.day });
-  const [promisedTime, setPromisedTime] = useState(initialPromisedReturn.time);
   const today = new Date();
   const currentJalali = gregorianToJalali(today.getFullYear(), today.getMonth() + 1, today.getDate());
   const [datePickerOpen, setDatePickerOpen] = useState(false);
@@ -58,7 +59,7 @@ export function TechnicianConfirmationView({ token, confirmation }: { token: str
   const isRework = confirmation?.type === "rework";
   const needsPromisedReturn = Boolean(confirmation && !isReturn);
   const promisedGregorianDate = parseJalaliDate(promisedDate.year, promisedDate.month, promisedDate.day);
-  const promisedReturnAt = promisedGregorianDate && promisedTime ? `${promisedGregorianDate}T${promisedTime}` : "";
+  const promisedReturnAt = promisedGregorianDate ? `${promisedGregorianDate}T23:59:59` : "";
   const firstGregorian = jalaliToGregorian(viewYear, viewMonth, 1);
   const firstWeekDay = (new Date(firstGregorian.year, firstGregorian.month - 1, firstGregorian.day).getDay() + 1) % 7;
   const monthLength = viewMonth <= 6 ? 31 : viewMonth <= 11 ? 30 : parseJalaliDate(String(viewYear), "12", "30") ? 30 : 29;
@@ -97,7 +98,7 @@ export function TechnicianConfirmationView({ token, confirmation }: { token: str
     if (needsPromisedReturn) {
       const selected = new Date(promisedReturnAt);
       if (!promisedReturnAt || Number.isNaN(selected.getTime()) || selected.getTime() <= Date.now()) {
-        setError("زمان تحویل دستگاه به مجموعه را برای آینده مشخص کنید.");
+        setError("تاریخ تحویل دستگاه به مجموعه را مشخص کنید.");
         return;
       }
       promisedReturnIso = selected.toISOString();
@@ -131,28 +132,27 @@ export function TechnicianConfirmationView({ token, confirmation }: { token: str
 
   return <main className="confirmation-public-page"><section className="confirmation-public-card technician-confirmation-card">
     <header><div className="confirmation-brand"><span><ShieldCheck /></span><div><strong>MinePlus</strong><small>تأیید امن تعمیرکار</small></div></div><span className="confirmation-kind">{isReturn || isRework ? <RotateCcw /> : <HardHat />}{kindLabel}</span></header>
-    {confirmed ? <div className="confirmation-success"><span><CheckCircle2 /></span><h1>تأیید شما ثبت شد</h1><p>{successText}</p>{needsPromisedReturn && promisedReturnAt && <div className="confirmation-promised-result"><small>زمان اعلام‌شده برای تحویل به مجموعه</small><strong>{formatDate(promisedReturnAt)}</strong></div>}{confirmedAt && <time>{formatDate(confirmedAt)}</time>}</div> : <>
+    {confirmed ? <div className="confirmation-success"><span><CheckCircle2 /></span><h1>تأیید شما ثبت شد</h1><p>{successText}</p>{needsPromisedReturn && promisedReturnAt && <div className="confirmation-promised-result"><small>تاریخ اعلام‌شده برای تحویل به مجموعه</small><strong>{formatDateOnly(promisedReturnAt)}</strong></div>}{confirmedAt && <time>{formatDate(confirmedAt)}</time>}</div> : <>
       <div className="confirmation-copy"><small>{confirmation.technician_name}</small><h1>{question}</h1><p>مشخصات زیر را بررسی کنید و فقط در صورت درست بودن، تأیید را بزنید.</p></div>
       <div className="confirmation-items"><article className="confirmation-item"><span><PackageCheck /></span><div><small>دستگاه مشتری {confirmation.customer_name}</small><strong>{confirmation.item_name}</strong><p>{confirmation.quantity.toLocaleString("fa-IR")} عدد</p></div></article></div>
       {needsPromisedReturn && <section className="confirmation-promised-field">
-        <header><span><CalendarClock /></span><div><strong>چه زمانی دستگاه را به مجموعه تحویل می‌دهید؟</strong><small>تاریخ شمسی و ساعت تقریبی را انتخاب کنید</small></div></header>
+        <header><span><CalendarClock /></span><div><strong>چه تاریخی دستگاه را به مجموعه تحویل می‌دهید؟</strong><small>تاریخ را از تقویم شمسی انتخاب کنید</small></div></header>
         <div className="confirmation-promised-controls">
           <div className="confirmation-promised-control confirmation-promised-date jalali-picker-field">
             <span><CalendarDays />تاریخ تحویل</span>
             <button type="button" className={`jalali-picker-trigger ${selectedDateLabel ? "selected" : ""}`} aria-expanded={datePickerOpen} onClick={() => setDatePickerOpen((open) => !open)}><CalendarDays /><span>{selectedDateLabel ?? "انتخاب تاریخ"}</span><ChevronLeft /></button>
-            {datePickerOpen && <div className="jalali-picker-panel" role="dialog" aria-label="تقویم شمسی">
+            {datePickerOpen && <><button type="button" className="jalali-picker-backdrop" aria-label="بستن تقویم" onClick={() => setDatePickerOpen(false)} /><div className="jalali-picker-panel" role="dialog" aria-modal="true" aria-label="تقویم شمسی">
               <div className="jalali-picker-header"><button type="button" aria-label="ماه قبل" onClick={() => moveMonth(-1)}><ChevronRight /></button><strong>{jalaliMonths[viewMonth - 1]} {faNumber(viewYear)}</strong><button type="button" aria-label="ماه بعد" onClick={() => moveMonth(1)}><ChevronLeft /></button></div>
               <div className="jalali-weekdays">{weekDays.map((day) => <span key={day}>{day}</span>)}</div>
               <div className="jalali-days">{calendarCells.map((day, index) => day ? <button type="button" key={`${viewYear}-${viewMonth}-${day}`} disabled={isPastDate(viewYear, viewMonth, day)} className={`${Number(promisedDate.year) === viewYear && Number(promisedDate.month) === viewMonth && Number(promisedDate.day) === day ? "selected" : ""} ${currentJalali.year === viewYear && currentJalali.month === viewMonth && currentJalali.day === day ? "today" : ""}`} onClick={() => selectDate(viewYear, viewMonth, day)}>{faNumber(day)}</button> : <span key={`empty-${index}`} />)}</div>
               <div className="jalali-picker-footer"><button type="button" onClick={() => selectDate(currentJalali.year, currentJalali.month, currentJalali.day)}>امروز</button><button type="button" onClick={() => setDatePickerOpen(false)}>بستن</button></div>
-            </div>}
+            </div></>}
           </div>
-          <label className="confirmation-promised-control"><span><Clock3 />ساعت تحویل</span><input type="time" value={promisedTime} onChange={(event) => { setPromisedTime(event.target.value); setError(null); }} required /></label>
         </div>
       </section>}
       <div className="confirmation-meta"><span>زمان ساخت درخواست</span><strong>{formatDate(confirmation.requestedAt)}</strong></div>
       {error && <p className="confirmation-error" role="alert">{error}</p>}
-      <button className="button button-primary confirmation-submit" onClick={confirm} disabled={pending}><CheckCircle2 />{pending ? "در حال ثبت..." : isReturn ? "تأیید می‌کنم تحویل دادم" : "ثبت زمان و تأیید تحویل"}</button>
+      <button className="button button-primary confirmation-submit" onClick={confirm} disabled={pending}><CheckCircle2 />{pending ? "در حال ثبت..." : isReturn ? "تأیید می‌کنم تحویل دادم" : "ثبت تاریخ و تأیید تحویل"}</button>
       <p className="confirmation-note"><ShieldCheck /> این لینک مخصوص همین دستگاه است و پس از تأیید دوباره استفاده نمی‌شود.</p>
     </>}
   </section></main>;
