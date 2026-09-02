@@ -46,6 +46,11 @@ export type Database = {
         { id: string; daily_report_id: string; description: string; amount: number; invoice_path: string | null; invoice_original_name: string | null; invoice_mime_type: string | null; invoice_size_bytes: number | null; created_at: string },
         { daily_report_id: string; description: string; amount: number; invoice_path?: string | null; invoice_original_name?: string | null; invoice_mime_type?: string | null; invoice_size_bytes?: number | null }
       >;
+      employee_expenses: Table<
+        { id: string; employee_id: string; created_by: string; expense_date: string; description: string; amount: number; invoice_path: string | null; invoice_original_name: string | null; invoice_mime_type: string | null; invoice_size_bytes: number | null; created_at: string },
+        { employee_id: string; created_by: string; expense_date: string; description: string; amount: number; invoice_path?: string | null; invoice_original_name?: string | null; invoice_mime_type?: string | null; invoice_size_bytes?: number | null },
+        { expense_date?: string; description?: string; amount?: number; invoice_path?: string | null; invoice_original_name?: string | null; invoice_mime_type?: string | null; invoice_size_bytes?: number | null }
+      >;
       customers: Table<
         { id: string; full_name: string; phone: string | null; created_by: string; created_at: string; updated_at: string },
         { full_name: string; phone?: string | null; created_by: string },

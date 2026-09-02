@@ -8,7 +8,7 @@ const read = (path) => readFile(new URL(path, root), "utf8");
 
 test("خروجی Next.js همه مسیرهای اصلی را دارد", async () => {
   const manifest = JSON.parse(await read(".next/server/app-paths-manifest.json"));
-  for (const route of ["/login/page", "/offline/page", "/dashboard/page", "/daily-reports/page", "/daily-tasks/page", "/maintenance/page", "/maintenance/new/page", "/employees/page", "/employees/new/page", "/customers/page", "/customers/new/page", "/customers/[id]/page", "/technicians/page", "/profile/page", "/reports/page", "/activity/page", "/confirm/[token]/page", "/technician-confirm/[token]/page", "/api/users/route", "/api/daily-reports/route", "/api/daily-tasks/route", "/api/maintenance-intakes/route", "/api/customers/route", "/api/customers/[id]/items/route", "/api/customers/[id]/items/[itemId]/route", "/api/customers/[id]/items/[itemId]/confirmation/route", "/api/confirmations/[token]/route", "/api/technician-jobs/route", "/api/technician-jobs/[id]/confirmation/route", "/api/technician-confirmations/[token]/route", "/api/profile/avatar/route", "/api/reports/[type]/[id]/review/route"]) {
+  for (const route of ["/login/page", "/offline/page", "/dashboard/page", "/daily-reports/page", "/daily-tasks/page", "/expenses/page", "/maintenance/page", "/maintenance/new/page", "/employees/page", "/employees/new/page", "/customers/page", "/customers/new/page", "/customers/[id]/page", "/technicians/page", "/profile/page", "/reports/page", "/activity/page", "/confirm/[token]/page", "/technician-confirm/[token]/page", "/api/users/route", "/api/daily-reports/route", "/api/daily-tasks/route", "/api/expenses/route", "/api/maintenance-intakes/route", "/api/customers/route", "/api/customers/[id]/items/route", "/api/customers/[id]/items/[itemId]/route", "/api/customers/[id]/items/[itemId]/confirmation/route", "/api/confirmations/[token]/route", "/api/technician-jobs/route", "/api/technician-jobs/[id]/confirmation/route", "/api/technician-confirmations/[token]/route", "/api/profile/avatar/route", "/api/reports/[type]/[id]/review/route"]) {
     assert.ok(manifest[route], `missing ${route}`);
   }
 });
@@ -18,6 +18,7 @@ test("فرم‌ها هیچ مقدار اولیه‌ای ندارند", async () 
   assert.doesNotMatch(source, /defaultValue=/);
   assert.doesNotMatch(source, /defaultValues:/);
   assert.match(source, /autoComplete="off"/);
+  assert.doesNotMatch(source, /type="time"/);
   assert.doesNotMatch(source, /مثلاً|example/i);
 });
 
@@ -182,18 +183,6 @@ test("تعمیرکار زمان تحویل به مجموعه را مشخص می�
   assert.match(token, /delete\(\)\.eq\("id", splitJob\.id\)/);
 });
 
-test("ساعت گزارش روزانه در وب و اپ انتخابی است و تایپ دستی ندارد", async () => {
-  const web = await read("components/daily-report-form.tsx");
-  const mobile = await read("mobile/src/app/(tabs)/report.tsx");
-  assert.match(web, /type="time"/);
-  assert.match(web, /step="300"/);
-  assert.doesNotMatch(web, /time-text-input" type="text"/);
-  assert.match(mobile, /function TimePickerField/);
-  assert.match(mobile, /ساعت را انتخاب کنید/);
-  assert.match(mobile, /دقیقه را انتخاب کنید/);
-  assert.doesNotMatch(mobile, /normalizeTime/);
-});
-
 test("تعمیرکارهای ثابت قابل انتخاب هستند و نام آزاد فقط برای گزینه دیگر نمایش داده می‌شود", async () => {
   const web = await read("components/technician-jobs-view.tsx");
   const mobile = await read("mobile/src/app/technicians.tsx");
@@ -296,6 +285,26 @@ test("مرحله سوم مخارج اختیاری و فاکتور تصویری �
   assert.match(list, /report-expenses/);
   assert.match(migration, /create table public\.daily_report_expenses/);
   assert.match(migration, /'report-invoices'/);
+});
+
+test("تب مستقل مخارج برای کارمند خصوصی و برای میلاد پروفایلی است", async () => {
+  const page = await read("app/expenses/page.tsx");
+  const view = await read("components/expenses-view.tsx");
+  const api = await read("app/api/expenses/route.ts");
+  const migration = await read("supabase/migrations/202609020016_employee_expenses.sql");
+  const shell = await read("components/app-shell.tsx");
+  const mobile = await read("mobile/src/app/expenses.tsx");
+  assert.match(page, /viewer\.role === "admin"/);
+  assert.match(view, /مخارج کارمندان/);
+  assert.match(view, /ریز مخارج/);
+  assert.match(view, /جمع کل مخارج/);
+  assert.match(view, /افزودن تصویر فاکتور/);
+  assert.match(api, /employee_expenses/);
+  assert.match(api, /createSignedUrl/);
+  assert.match(migration, /current_app_role\(\) = 'admin'/);
+  assert.match(migration, /employees\.profile_id = auth\.uid\(\)/);
+  assert.match(shell, /href: "\/expenses"/);
+  assert.match(mobile, /جمع و ریز مخارج کارمندان/);
 });
 
 test("تاریخ با تقویم شمسی و بدون ورودی تایپی انتخاب می‌شود", async () => {

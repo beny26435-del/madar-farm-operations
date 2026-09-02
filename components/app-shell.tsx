@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 import {
   Activity, Bell, CalendarDays, ChevronLeft, ChevronsLeft, ChevronsRight,
   CircleHelp, ContactRound, FileBarChart, Gauge, HardHat, Hexagon, Home, ListTodo, LogOut, Menu,
-  Search, Settings, UserRound, Users, Wrench, X,
+  Search, Settings, UserRound, Users, WalletCards, Wrench, X,
 } from "lucide-react";
 import { useState } from "react";
 import { BottomSheet } from "./ui";
@@ -18,6 +18,7 @@ const nav = [
   { href: "/maintenance", label: "تعمیرات و سرویس", icon: Wrench, permission: "maintenance-report:write" },
   { href: "/daily-reports", label: "گزارش", icon: CalendarDays, permission: "daily-report:write" },
   { href: "/daily-tasks", label: "کارهای روزانه", icon: ListTodo, permission: "dashboard:view" },
+  { href: "/expenses", label: "مخارج", icon: WalletCards, permission: "dashboard:view" },
   { href: "/employees", label: "کارکنان", icon: Users, permission: "employees:view" },
   { href: "/customers", label: "مشتریان", icon: ContactRound, permission: "customers:view" },
   { href: "/technicians", label: "تعمیرکاران", icon: HardHat, permission: "technician-jobs:manage" },
@@ -30,6 +31,7 @@ const pageTitles: Record<string, string> = {
   "/daily-reports": "گزارش‌های روزانه",
   "/daily-reports/new": "ثبت گزارش روزانه",
   "/daily-tasks": "کارهای روزانه",
+  "/expenses": "مخارج",
   "/maintenance": "تعمیرات و سرویس",
   "/maintenance/new": "ثبت تعمیرات",
   "/employees": "کارکنان",
@@ -132,6 +134,7 @@ export function AppShell({ children, viewer }: { children: React.ReactNode; view
           {hasPermission(viewer.role, "employees:view") && <Link href="/employees"><Users />کارکنان</Link>}
           {hasPermission(viewer.role, "customers:view") && <Link href="/customers"><ContactRound />مشتریان</Link>}
           <Link href="/daily-tasks"><ListTodo />کارهای روزانه</Link>
+          <Link href="/expenses"><WalletCards />مخارج</Link>
           {hasPermission(viewer.role, "technician-jobs:manage") && <Link href="/technicians"><HardHat />تعمیرکاران</Link>}
           {hasPermission(viewer.role, "reports:review") && <Link href="/reports"><FileBarChart />گزارش‌ها</Link>}
           {hasPermission(viewer.role, "activity:view") && <Link href="/activity"><Activity />فعالیت‌ها</Link>}

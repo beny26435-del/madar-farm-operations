@@ -8,6 +8,7 @@ import type { AppRole } from "@/lib/types";
 import { roleLabels } from "@/lib/format";
 
 const items = [
+  { href: "/expenses", title: "مخارج", icon: "wallet-outline", roles: ["admin", "manager", "employee"] },
   { href: "/tasks", title: "کارهای روزانه", icon: "checkbox-outline", roles: ["admin", "manager", "employee"] },
   { href: "/customers", title: "مشتریان", icon: "people-circle-outline", roles: ["admin", "manager"] },
   { href: "/technicians", title: "تعمیرکاران", icon: "hammer-outline", roles: ["admin", "manager", "employee"] },

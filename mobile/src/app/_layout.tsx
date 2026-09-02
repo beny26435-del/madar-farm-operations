@@ -39,6 +39,7 @@ function RootNavigator() {
       <Stack.Screen name="review" />
       <Stack.Screen name="activity" />
       <Stack.Screen name="profile" />
+      <Stack.Screen name="expenses" />
     </Stack>
   </>;
 }
