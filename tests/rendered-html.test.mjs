@@ -287,24 +287,33 @@ test("مرحله سوم مخارج اختیاری و فاکتور تصویری �
   assert.match(migration, /'report-invoices'/);
 });
 
-test("تب مستقل مخارج برای کارمند خصوصی و برای میلاد پروفایلی است", async () => {
+test("تب مخارج، مانده پرداخت و فیلتر پروفایل را امن مدیریت می‌کند", async () => {
   const page = await read("app/expenses/page.tsx");
   const view = await read("components/expenses-view.tsx");
   const api = await read("app/api/expenses/route.ts");
   const migration = await read("supabase/migrations/202609020016_employee_expenses.sql");
+  const paymentMigration = await read("supabase/migrations/202609020017_employee_expense_payments.sql");
   const shell = await read("components/app-shell.tsx");
   const mobile = await read("mobile/src/app/expenses.tsx");
   assert.match(page, /viewer\.role === "admin"/);
   assert.match(view, /مخارج کارمندان/);
   assert.match(view, /ریز مخارج/);
-  assert.match(view, /جمع کل مخارج/);
+  assert.match(view, /مانده قابل پرداخت/);
+  assert.match(view, /پرداخت‌نشده/);
+  assert.match(view, /پرداخت‌شده/);
+  assert.match(view, /method: "PATCH"/);
   assert.match(view, /افزودن تصویر فاکتور/);
   assert.match(api, /employee_expenses/);
   assert.match(api, /createSignedUrl/);
   assert.match(migration, /current_app_role\(\) = 'admin'/);
   assert.match(migration, /employees\.profile_id = auth\.uid\(\)/);
+  assert.match(paymentMigration, /paid_at timestamptz/);
+  assert.match(paymentMigration, /current_app_role\(\) = 'admin'/);
+  assert.match(api, /actor\.role !== "admin"/);
+  assert.match(api, /employee_expense\.paid/);
   assert.match(shell, /href: "\/expenses"/);
   assert.match(mobile, /جمع و ریز مخارج کارمندان/);
+  assert.match(mobile, /changePayment/);
 });
 
 test("تاریخ با تقویم شمسی و بدون ورودی تایپی انتخاب می‌شود", async () => {

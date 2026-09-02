@@ -12,6 +12,7 @@ const inputSchema = z.object({
   description: z.string().trim().min(2).max(500),
   amount: z.string().trim().min(1).max(20),
 });
+const paymentSchema = z.object({ expenseId: z.string().uuid(), paid: z.boolean() });
 const allowedInvoiceTypes = new Set(["image/jpeg", "image/png", "image/webp", "image/heic", "image/heif"]);
 const invoiceExtensions: Record<string, string> = { "image/jpeg": "jpg", "image/png": "png", "image/webp": "webp", "image/heic": "heic", "image/heif": "heif" };
 
@@ -46,7 +47,7 @@ export async function GET() {
   const { data: profiles } = profileIds.length ? await actor.admin.from("profiles").select("id, avatar_path").in("id", profileIds) : { data: [] };
   const avatars = new Map((profiles ?? []).map((profile) => [profile.id, profile.avatar_path ? actor.admin.storage.from("profile-avatars").getPublicUrl(profile.avatar_path).data.publicUrl : null]));
   const { data: expenses, error } = employeeIds.length
-    ? await actor.admin.from("employee_expenses").select("id, employee_id, expense_date, description, amount, invoice_path, created_at").in("employee_id", employeeIds).order("expense_date", { ascending: false }).order("created_at", { ascending: false })
+    ? await actor.admin.from("employee_expenses").select("id, employee_id, expense_date, description, amount, invoice_path, paid_at, paid_by, created_at").in("employee_id", employeeIds).order("expense_date", { ascending: false }).order("created_at", { ascending: false })
     : { data: [], error: null };
   if (error) return NextResponse.json({ message: "دریافت مخارج انجام نشد." }, { status: 500 });
   const invoiceUrls = new Map<string, string>();
@@ -58,7 +59,7 @@ export async function GET() {
   const avatarUrls = new Map(visibleEmployees.map((employee) => [employee.id, employee.profile_id ? avatars.get(employee.profile_id) ?? null : null]));
   return NextResponse.json({
     employees: visibleEmployees.map((employee) => ({ id: employee.id, fullName: employee.full_name, avatarUrl: avatarUrls.get(employee.id) ?? null })),
-    expenses: (expenses ?? []).map((expense) => ({ id: expense.id, employeeId: expense.employee_id, employeeName: names.get(expense.employee_id) ?? "کارمند", avatarUrl: avatarUrls.get(expense.employee_id) ?? null, expenseDate: expense.expense_date, description: expense.description, amount: expense.amount, invoiceUrl: expense.invoice_path ? invoiceUrls.get(expense.invoice_path) ?? null : null, createdAt: expense.created_at })),
+    expenses: (expenses ?? []).map((expense) => ({ id: expense.id, employeeId: expense.employee_id, employeeName: names.get(expense.employee_id) ?? "کارمند", avatarUrl: avatarUrls.get(expense.employee_id) ?? null, expenseDate: expense.expense_date, description: expense.description, amount: expense.amount, invoiceUrl: expense.invoice_path ? invoiceUrls.get(expense.invoice_path) ?? null : null, paidAt: expense.paid_at, paidBy: expense.paid_by, createdAt: expense.created_at })),
     isAdmin: actor.role === "admin",
   });
 }
@@ -98,5 +99,19 @@ export async function POST(request: Request) {
     invoiceUrl = data?.signedUrl ?? null;
   }
   await recordActivity({ actorId: actor.actorId, action: "employee_expense.created", entityType: "employee_expense", entityId: expense.id, metadata: { amount, description: parsed.data.description, expense_date: expenseDate } });
-  return NextResponse.json({ expense: { id: expense.id, employeeId: expense.employee_id, employeeName: actor.employee.full_name, avatarUrl: null, expenseDate: expense.expense_date, description: expense.description, amount: expense.amount, invoiceUrl, createdAt: expense.created_at }, message: "هزینه ثبت شد." }, { status: 201 });
+  return NextResponse.json({ expense: { id: expense.id, employeeId: expense.employee_id, employeeName: actor.employee.full_name, avatarUrl: null, expenseDate: expense.expense_date, description: expense.description, amount: expense.amount, invoiceUrl, paidAt: null, paidBy: null, createdAt: expense.created_at }, message: "هزینه ثبت شد." }, { status: 201 });
+}
+
+export async function PATCH(request: Request) {
+  const actor = await activeActor();
+  if (!actor) return NextResponse.json({ message: "نشست معتبر نیست." }, { status: 401 });
+  if (actor.role !== "admin") return NextResponse.json({ message: "فقط ادمین می‌تواند وضعیت پرداخت را تغییر دهد." }, { status: 403 });
+  const parsed = paymentSchema.safeParse(await request.json().catch(() => null));
+  if (!parsed.success) return NextResponse.json({ message: "درخواست تغییر وضعیت معتبر نیست." }, { status: 400 });
+  const payment = parsed.data.paid ? { paid_at: new Date().toISOString(), paid_by: actor.actorId } : { paid_at: null, paid_by: null };
+  const { data: expense, error } = await actor.admin.from("employee_expenses").update(payment).eq("id", parsed.data.expenseId).select("id, employee_id, amount, paid_at, paid_by").maybeSingle();
+  if (error) return NextResponse.json({ message: "تغییر وضعیت پرداخت انجام نشد." }, { status: 500 });
+  if (!expense) return NextResponse.json({ message: "هزینه پیدا نشد." }, { status: 404 });
+  await recordActivity({ actorId: actor.actorId, action: parsed.data.paid ? "employee_expense.paid" : "employee_expense.unpaid", entityType: "employee_expense", entityId: expense.id, metadata: { amount: expense.amount, employee_id: expense.employee_id } });
+  return NextResponse.json({ id: expense.id, paidAt: expense.paid_at, paidBy: expense.paid_by, message: parsed.data.paid ? "هزینه پرداخت‌شده ثبت شد." : "هزینه به پرداخت‌نشده بازگشت." });
 }

@@ -1,5 +1,6 @@
 .success { margin: 0 0 16px; padding: 12px 14px; border: 1px solid #c8dfcd; border-radius: 13px; color: #356442; background: #f0f8f2; display: flex; align-items: center; gap: 8px; font-size: 11px; font-weight: 750; }
 .success svg { width: 16px; }
+.error { margin: 0 0 16px; padding: 12px 14px; border: 1px solid #efd4d0; border-radius: 13px; color: #93483f; background: #fff4f2; font-size: 11px; font-weight: 750; }
 .summaryGrid { margin-bottom: 16px; display: grid; grid-template-columns: minmax(0,1.65fr) minmax(260px,.75fr); gap: 13px; }
 .summaryGrid article { position: relative; min-height: 118px; padding: 22px; overflow: hidden; border: 1px solid #dce4dd; border-radius: 19px; display: flex; align-items: center; gap: 15px; }
 .totalCard { color: #fff; border-color: #183428 !important; background: linear-gradient(125deg,#10271e 0%,#244735 100%); box-shadow: 0 12px 28px rgba(17,45,31,.13); }
@@ -45,9 +46,15 @@
 .detailTotal strong { color: #3f624b; font-size: 12px; }
 .closeDetail { width: 35px; height: 35px; border: 0; border-radius: 10px; color: #738179; background: #edf1ee; display: grid; place-items: center; cursor: pointer; }
 .closeDetail svg { width: 15px; }
+.filters { padding: 11px 20px; border-bottom: 1px solid #e9edea; background: #fff; display: flex; align-items: center; gap: 7px; }
+.filters button { min-height: 36px; padding: 0 12px; border: 1px solid #e0e6e1; border-radius: 10px; color: #66756c; background: #f7f9f7; display: flex; align-items: center; gap: 7px; font-family: inherit; font-size: 9px; font-weight: 750; cursor: pointer; }
+.filters button span { min-width: 20px; height: 20px; padding: 0 5px; border-radius: 999px; background: #fff; display: grid; place-items: center; font-size: 8px; }
+.filters button.filterActive { color: #fff; border-color: #244735; background: #244735; }
+.filters button.filterActive span { color: #244735; }
 .records { display: grid; }
-.records article { min-height: 82px; padding: 14px 20px; border-bottom: 1px solid #edf0ed; display: grid; grid-template-columns: 160px minmax(0,1fr) 130px 115px; align-items: center; gap: 14px; }
+.records article { min-height: 86px; padding: 14px 20px; border-bottom: 1px solid #edf0ed; display: grid; grid-template-columns: 150px minmax(0,1fr) 120px 190px; align-items: center; gap: 14px; }
 .records article:last-child { border-bottom: 0; }
+.records article.recordPaid { background: #fbfcfb; }
 .recordDate { color: #708078; display: flex; align-items: center; gap: 7px; }
 .recordDate svg { width: 15px; }
 .recordDate strong { font-size: 9px; }
@@ -55,15 +62,21 @@
 .recordDescription strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 11px; }
 .recordDescription small { color: #939c97; font-size: 8px; }
 .recordAmount { color: #344f40; font-size: 11px; text-align: left; white-space: nowrap; }
+.recordActions { display: flex; align-items: center; justify-content: flex-end; gap: 6px; }
 .invoiceLink,.noInvoice { min-height: 34px; padding: 0 9px; border-radius: 9px; display: flex; align-items: center; justify-content: center; gap: 5px; font-size: 8px; font-weight: 750; }
 .invoiceLink { color: #40634a; background: #e8f3e9; }
 .invoiceLink svg { width: 13px; }
 .noInvoice { color: #8a958e; background: #f2f4f2; }
+.markPaid,.undoPayment { min-height: 34px; padding: 0 9px; border: 0; border-radius: 9px; display: flex; align-items: center; justify-content: center; gap: 5px; font-family: inherit; font-size: 8px; font-weight: 800; white-space: nowrap; cursor: pointer; }
+.markPaid { color: #fff; background: #35684a; }
+.undoPayment { color: #6d776f; background: #edf0ee; }
+.markPaid svg,.undoPayment svg { width: 13px; }
+.markPaid:disabled,.undoPayment:disabled { opacity: .55; cursor: wait; }
 .selectEmpty { min-height: 270px; }
 .form { margin-top: 18px; display: grid; gap: 15px; }
 .form :global(.jalali-picker-panel) { z-index: 80; }
 .form :global(.invoice-upload) { width: 100%; }
 .description { min-height: 94px; }
-@media (max-width:1050px) { .summaryGrid { grid-template-columns: minmax(0,1.3fr) minmax(230px,.7fr); } .profileGrid { grid-template-columns: repeat(2,minmax(0,1fr)); } .records article { grid-template-columns: 135px minmax(0,1fr) 110px 105px; } }
-@media (max-width:767px) { .summaryGrid { grid-template-columns: 1fr; } .summaryGrid article { min-height: 96px; padding: 17px; border-radius: 17px; } .summaryIcon { width: 48px; height: 48px; border-radius: 14px; } .summaryGrid strong { font-size: 23px; } .countCard strong { font-size: 20px; } .sectionHeader { min-height: 74px; padding: 14px; align-items: flex-start; } .sectionHeader p { max-width: 240px; line-height: 1.7; } .profileGrid { padding: 11px; grid-template-columns: 1fr; gap: 8px; } .profileGrid > button { min-height: 80px; grid-template-columns: 44px minmax(0,1fr) auto 16px; } .avatar { width: 44px; height: 44px; border-radius: 13px; } .detailHeader { min-height: 88px; padding: 13px; flex-wrap: wrap; } .detailTotal { order: 3; width: 100%; margin: 0; display: flex; align-items: center; justify-content: space-between; } .closeDetail { margin-right: auto; } .records article { padding: 14px; grid-template-columns: minmax(0,1fr) auto; gap: 9px; } .recordDate { grid-column: 1/-1; } .recordAmount { text-align: left; } .invoiceLink,.noInvoice { grid-column: 1/-1; } .form :global(.jalali-picker-panel) { position: fixed; z-index: 121; top: 50%; right: 50%; left: auto; width: min(calc(100vw - 32px),360px); transform: translate(50%,-50%); } }
+@media (max-width:1050px) { .summaryGrid { grid-template-columns: minmax(0,1.3fr) minmax(230px,.7fr); } .profileGrid { grid-template-columns: repeat(2,minmax(0,1fr)); } .records article { grid-template-columns: 125px minmax(0,1fr) 105px 175px; } }
+@media (max-width:767px) { .summaryGrid { grid-template-columns: 1fr; } .summaryGrid article { min-height: 96px; padding: 17px; border-radius: 17px; } .summaryIcon { width: 48px; height: 48px; border-radius: 14px; } .summaryGrid strong { font-size: 23px; } .countCard strong { font-size: 20px; } .sectionHeader { min-height: 74px; padding: 14px; align-items: flex-start; } .sectionHeader p { max-width: 240px; line-height: 1.7; } .profileGrid { padding: 11px; grid-template-columns: 1fr; gap: 8px; } .profileGrid > button { min-height: 80px; grid-template-columns: 44px minmax(0,1fr) auto 16px; } .avatar { width: 44px; height: 44px; border-radius: 13px; } .detailHeader { min-height: 88px; padding: 13px; flex-wrap: wrap; } .detailTotal { order: 3; width: 100%; margin: 0; display: flex; align-items: center; justify-content: space-between; } .closeDetail { margin-right: auto; } .filters { padding: 10px 12px; overflow-x: auto; } .filters button { flex: 0 0 auto; } .records article { padding: 14px; grid-template-columns: minmax(0,1fr) auto; gap: 9px; } .recordDate { grid-column: 1/-1; } .recordAmount { text-align: left; } .recordActions { grid-column: 1/-1; justify-content: stretch; } .recordActions > * { flex: 1; } .form :global(.jalali-picker-panel) { position: fixed; z-index: 121; top: 50%; right: 50%; left: auto; width: min(calc(100vw - 32px),360px); transform: translate(50%,-50%); } }
 @media (max-width:390px) { .profileAmount { display: none; } .profileGrid > button { grid-template-columns: 44px minmax(0,1fr) 16px; } }
