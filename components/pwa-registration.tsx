@@ -5,7 +5,7 @@ import { useEffect } from "react";
 export function PwaRegistration() {
   useEffect(() => {
     if (!("serviceWorker" in navigator)) return;
-    const register = () => navigator.serviceWorker.register("/sw.js", { scope: "/" }).catch(() => undefined);
+    const register = () => navigator.serviceWorker.register("/sw.js", { scope: "/", updateViaCache: "none" }).then((registration) => registration.update()).catch(() => undefined);
     if (document.readyState === "complete") void register();
     else window.addEventListener("load", register, { once: true });
     return () => window.removeEventListener("load", register);

@@ -1,4 +1,4 @@
-const CACHE_NAME = "mineplus-static-v1";
+const CACHE_NAME = "mineplus-static-v2";
 const OFFLINE_URL = "/offline";
 const STATIC_ASSETS = [
   OFFLINE_URL,
@@ -31,8 +31,18 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  const isStatic = url.pathname.startsWith("/_next/static/") || url.pathname.startsWith("/icons/") || url.pathname === "/mineplus-icon.svg";
-  if (!isStatic) return;
+  const isNextAsset = url.pathname.startsWith("/_next/static/");
+  const isIcon = url.pathname.startsWith("/icons/") || url.pathname === "/mineplus-icon.svg";
+  if (!isNextAsset && !isIcon) return;
+  if (isNextAsset) {
+    event.respondWith(
+      fetch(request).then((response) => {
+        if (response.ok) void caches.open(CACHE_NAME).then((cache) => cache.put(request, response.clone()));
+        return response;
+      }).catch(() => caches.match(request)),
+    );
+    return;
+  }
   event.respondWith(
     caches.match(request).then((cached) => cached || fetch(request).then((response) => {
       if (response.ok) void caches.open(CACHE_NAME).then((cache) => cache.put(request, response.clone()));
