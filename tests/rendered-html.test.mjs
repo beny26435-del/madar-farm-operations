@@ -45,6 +45,15 @@ test("گزارش روزانه واقعاً در Supabase ثبت می‌شود", 
   assert.doesNotMatch(form, /نام کارمند.*input/s);
 });
 
+test("هر کارمند می‌تواند در یک روز چند گزارش ثبت کند", async () => {
+  const api = await read("app/api/daily-reports/route.ts");
+  const migration = await read("supabase/migrations/202609050018_allow_multiple_daily_reports.sql");
+  assert.match(migration, /drop index if exists public\.daily_reports_employee_date_live_key/);
+  assert.match(migration, /create index if not exists daily_reports_employee_date_idx/);
+  assert.doesNotMatch(migration, /create unique index/);
+  assert.doesNotMatch(api, /برای این تاریخ قبلاً گزارش ثبت کرده‌اید/);
+});
+
 test("گزارش روزانه محل پروژه و همکاران همراه را ذخیره می‌کند", async () => {
   const page = await read("app/daily-reports/new/page.tsx");
   const form = await read("components/daily-report-form.tsx");

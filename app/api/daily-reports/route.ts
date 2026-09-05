@@ -95,8 +95,7 @@ export async function POST(request: Request) {
   }).select("id").single();
 
   if (error) {
-    const message = error.code === "23505" ? "برای این تاریخ قبلاً گزارش ثبت کرده‌اید." : "ذخیره گزارش انجام نشد. دوباره تلاش کنید.";
-    return NextResponse.json({ message }, { status: error.code === "23505" ? 409 : 500 });
+    return NextResponse.json({ message: "ذخیره گزارش انجام نشد. دوباره تلاش کنید." }, { status: 500 });
   }
 
   if (input.collaboratorIds.length > 0) {
